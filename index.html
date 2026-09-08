@@ -2611,7 +2611,7 @@ function bind(){
       ME.photoUrl = url;
       photoUploadPct = null;
       render();
-      try{ await fbPut(`users/${ME.uid}`, ME); syncStatus='online'; }
+      try{ await fbPatch(`users/${ME.uid}`, { photoUrl: ME.photoUrl }); syncStatus='online'; }
       catch(err){ console.error(err); syncStatus='offline'; }
     }catch(err){
       console.error(err);
@@ -2626,7 +2626,7 @@ function bind(){
     ME.bio = document.getElementById('editBio').value.trim();
     showEditModal = false;
     render();
-    try{ await fbPut(`users/${ME.uid}`, ME); syncStatus='online'; }
+    try{ await fbPatch(`users/${ME.uid}`, { name: ME.name, bio: ME.bio }); syncStatus='online'; }
     catch(err){ console.error(err); syncStatus='offline'; }
     render();
   };
