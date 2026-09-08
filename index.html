@@ -288,7 +288,9 @@
   .convo-head .n{font-weight:600; font-size:15px;}
   .convo-head .h{font-size:12.5px; color:var(--ink-soft);}
   .convo-msgs{flex:1; max-height:55vh; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:8px;}
-  .convo-bubble{max-width:72%; padding:9px 13px; border-radius:16px; font-size:14px; line-height:1.4; word-wrap:break-word;}
+  .convo-bubble{max-width:72%; padding:9px 13px; border-radius:16px; font-size:14px; line-height:1.4; word-wrap:break-word; cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation; transition:transform .12s ease;}
+  .convo-bubble:active{transform:scale(.97);}
+  .convo-bubble.deleted{font-style:italic; opacity:.72;}
   .convo-bubble{cursor:pointer; user-select:none; -webkit-user-select:none; transition:opacity .15s ease, transform .15s ease;}
   .convo-bubble:active{transform:scale(.98);}
   .convo-bubble.deleted{font-style:italic; opacity:.7; cursor:default;}
@@ -2628,16 +2630,57 @@ function bind(){
     openConversation(b.dataset.messageUid);
   });
 
-  // Double-tap / double-click any message to open delete choices.
+  // Reliable double-tap / double-click handler for phone + desktop.
+  // Uses pointer events so Android touch browsers do not depend on the
+  // browser's synthetic touch/click event sequence.
   document.querySelectorAll('.convo-bubble[data-message-id]:not(.deleted)').forEach(el=>{
-    let lastTap=0, tapTimer=null;
-    const openDelete=()=>showDeleteMenu(el.dataset.messageId);
-    el.addEventListener('dblclick',e=>{ e.preventDefault(); openDelete(); });
-    el.addEventListener('touchend',e=>{
+    let lastPointerTime=0;
+    let lastPointerX=0;
+    let lastPointerY=0;
+    let lastPointerType='';
+    let singleTapTimer=null;
+
+    const openDelete=()=>{
+      if(singleTapTimer){ clearTimeout(singleTapTimer); singleTapTimer=null; }
+      showDeleteMenu(el.dataset.messageId);
+    };
+
+    el.addEventListener('pointerup', e=>{
+      if(e.pointerType==='mouse' && e.button!==0) return;
+
       const now=Date.now();
-      if(now-lastTap<320){ e.preventDefault(); if(tapTimer) clearTimeout(tapTimer); lastTap=0; openDelete(); }
-      else { lastTap=now; tapTimer=setTimeout(()=>{lastTap=0;},360); }
-    },{passive:false});
+      const dx=Math.abs(e.clientX-lastPointerX);
+      const dy=Math.abs(e.clientY-lastPointerY);
+      const closeEnough=dx<35 && dy<35;
+      const sameType=lastPointerType===e.pointerType;
+
+      if(now-lastPointerTime<500 && closeEnough && sameType){
+        e.preventDefault();
+        e.stopPropagation();
+        lastPointerTime=0;
+        lastPointerType='';
+        openDelete();
+        return;
+      }
+
+      lastPointerTime=now;
+      lastPointerX=e.clientX;
+      lastPointerY=e.clientY;
+      lastPointerType=e.pointerType;
+
+      if(singleTapTimer) clearTimeout(singleTapTimer);
+      singleTapTimer=setTimeout(()=>{
+        lastPointerTime=0;
+        lastPointerType='';
+        singleTapTimer=null;
+      },520);
+    }, {passive:false});
+
+    el.addEventListener('dblclick', e=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openDelete();
+    });
   });
 
   const convoBack = document.querySelector('[data-convo-back]');
