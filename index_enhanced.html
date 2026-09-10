@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Vamshi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAF7F1;
+    --paper-raised:#FFFFFF;
+    --ink:#231A33;
+    --ink-soft:#6E6579;
+    --line:#E6E0D2;
+    --gold:#AD8422;
+    --gold-soft:#F1E6C8;
+    --berry:#A23F55;
+    --berry-soft:#F3DEE2;
+    --sidebar-w:240px;
+    --panel-w:320px;
+    --radius:3px;
+  }
+  html.dark{
+    --paper:#1C1626;
+    --paper-raised:#241D31;
+    --ink:#F3EEE3;
+    --ink-soft:#B1A7BE;
+    --line:#3A314B;
+    --gold:#D9B04C;
+    --gold-soft:#3A3122;
+    --berry:#D97C90;
+    --berry-soft:#3A222A;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  body,input,textarea,button{
+    font-family:'IBM Plex Sans', sans-serif;
+    color:var(--ink);
+  }
+  body{
+    background:var(--paper);
+    transition:background .25s ease, color .25s ease;
+  }
+  .brand{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+  }
+  a{color:inherit;text-decoration:none;}
+  button{cursor:pointer;font:inherit;}
+  ::selection{background:var(--gold-soft);}
+  svg{width:20px;height:20px;flex:none;}
+
+  /* ---------- APP SHELL ---------- */
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:var(--sidebar-w) minmax(0,1fr) var(--panel-w);
+    min-height:100vh;
+  }
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    border-right:1px solid var(--line);
+    padding:28px 18px;
+    position:sticky; top:0; height:100vh;
+    display:flex; flex-direction:column;
+  }
+  .logo{
+    font-size:26px;
+    letter-spacing:.2px;
+    margin:0 8px 34px;
+  }
+  .logo em{font-style:italic; color:var(--gold);}
+  .navlist{list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:2px;}
+  .navlist button{
+    width:100%;
+    display:flex; align-items:center; gap:14px;
+    background:none; border:none;
+    padding:11px 10px;
+    border-radius:var(--radius);
+    font-size:15.5px;
+    text-align:left;
+    color:var(--ink-soft);
+  }
+  .navlist button svg{width:21px;height:21px;flex:none;}
+  .navlist button .lbl{display:inline;}
+  .navlist button.active{ color:var(--ink); font-weight:600; }
+  .navlist button.active svg{ stroke:var(--berry); }
+  .navlist button:hover{background:var(--paper-raised);}
+  .compose-btn{
+    margin-top:22px;
+    background:var(--ink);
+    color:var(--paper);
+    border:none;
+    border-radius:999px;
+    padding:13px 0;
+    font-weight:600;
+    font-size:15px;
+  }
+  html.dark .compose-btn{background:var(--gold); color:#1C1626;}
+  .compose-btn:hover{opacity:.88;}
+  .sidebar-foot{margin-top:auto; padding-top:18px;}
+  .theme-toggle{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    border:1px solid var(--line); border-radius:999px;
+    padding:8px 12px; background:var(--paper-raised);
+    font-size:13.5px; color:var(--ink-soft); width:100%;
+    white-space:nowrap; overflow:hidden;
+  }
+
+  /* ---------- MAIN COLUMN ---------- */
+  .main{border-right:1px solid var(--line); min-height:100vh; position:relative;}
+  .topbar{
+    position:sticky; top:0; z-index:5;
+    background:color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--line);
+    padding:16px 22px;
+  }
+  .topbar h1{
+    font-family:'Fraunces', serif;
+    font-size:20px; margin:0; font-weight:600;
+  }
+  .topbar p{margin:2px 0 0; font-size:13px; color:var(--ink-soft);}
+
+  .composer{
+    padding:18px 22px; border-bottom:1px solid var(--line);
+    display:flex; gap:12px;
+  }
+  .avatar{
+    width:42px;height:42px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600; font-size:14px; flex:none; color:#fff;
+    overflow:hidden; position:relative;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
+  .composer-body{flex:1;}
+  .composer textarea{
+    width:100%; border:none; resize:none; background:none;
+    font-size:16.5px; line-height:1.45; outline:none; min-height:52px;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .composer textarea::placeholder{color:var(--ink-soft);}
+  .composer-row{display:flex; align-items:center; justify-content:space-between; margin-top:10px;}
+  .composer-count{font-size:12.5px; color:var(--ink-soft);}
+  .composer-tools{display:flex; align-items:center; gap:10px;}
+  .media-btn{
+    background:none; border:1px solid var(--line); border-radius:999px;
+    padding:7px 9px; color:var(--ink-soft); display:flex; align-items:center;
+  }
+  .media-btn:hover{color:var(--berry); border-color:var(--berry);}
+  .media-preview{position:relative; margin-top:10px; max-width:320px;}
+  .media-preview img, .media-preview video{width:100%; border-radius:var(--radius); border:1px solid var(--line); display:block; max-height:280px; background:#000;}
+  .media-remove{
+    position:absolute; top:6px; right:6px; width:24px; height:24px; border-radius:50%;
+    background:rgba(0,0,0,.6); color:#fff; border:none; display:flex; align-items:center; justify-content:center; font-size:14px;
+  }
+  .upload-progress{margin-top:8px; height:4px; background:var(--line); border-radius:2px; overflow:hidden;}
+  .upload-progress-bar{height:100%; background:var(--berry); transition:width .15s ease;}
+  .upload-label{font-size:12px; color:var(--ink-soft); margin-top:5px;}
+  .post-submit{
+    background:var(--berry); color:#fff; border:none;
+    border-radius:999px; padding:9px 20px; font-weight:600; font-size:14px;
+  }
+  .post-submit:disabled{opacity:.4; cursor:default;}
+
+  /* ---------- FEED / POSTS ---------- */
+  .feed{}
+  .post{
+    padding:18px 22px; border-bottom:1px solid var(--line);
+    display:flex; gap:12px; animation:fade .35s ease;
+  }
+  @keyframes fade{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;}}
+  .post-main{flex:1; min-width:0;}
+  .post-head{display:flex; align-items:baseline; gap:7px; flex-wrap:wrap;}
+  .post-head .name{font-weight:600; font-size:15px;}
+  .post-head .handle, .post-head .dot, .post-head .time{color:var(--ink-soft); font-size:13.5px;}
+  .post-text{margin:5px 0 10px; font-size:15.5px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word;}
+  .post-media{border-radius:var(--radius); margin-bottom:10px; overflow:hidden; border:1px solid var(--line); background:#000; position:relative;}
+  .post-media img, .post-media video{width:100%; max-height:520px; display:block; object-fit:contain; background:#000;}
+  .post-actions{display:flex; gap:26px;}
+  .act{
+    display:flex; align-items:center; gap:7px;
+    background:none; border:none; color:var(--ink-soft); font-size:13.5px;
+  }
+  .act svg{width:18px;height:18px;}
+  .act:hover{color:var(--ink);}
+  .act.liked{color:var(--berry);}
+  .act.liked svg{fill:var(--berry); stroke:var(--berry);}
+
+  .comments{margin-top:12px; border-top:1px dashed var(--line); padding-top:12px; display:flex; flex-direction:column; gap:10px;}
+  .comment{display:flex; gap:9px; font-size:14px;}
+  .comment .name{font-weight:600; margin-right:6px;}
+  .comment-form{display:flex; gap:9px; align-items:center; margin-top:2px;}
+  .comment-form input{
+    flex:1; border:1px solid var(--line); border-radius:999px;
+    padding:8px 14px; font-size:13.5px; background:var(--paper-raised); outline:none;
+  }
+  .comment-form button{background:none; border:none; color:var(--berry); font-weight:600; font-size:13.5px;}
+
+  /* ---------- SHORTS COMMENTS SHEET ---------- */
+  .short-comments-sheet{
+    background:var(--paper-raised); width:100%; max-width:460px; margin:0 auto;
+    border-radius:16px 16px 0 0; max-height:72vh; display:flex; flex-direction:column;
+    border:1px solid var(--line); border-bottom:none; animation:sheetUp .2s ease;
+  }
+  @keyframes sheetUp{from{transform:translateY(16px); opacity:.4;} to{transform:none; opacity:1;}}
+  .short-comments-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 16px; border-bottom:1px solid var(--line); flex:none;
+  }
+  .short-comments-head h3{margin:0; font-family:'Fraunces', serif; font-size:17px;}
+  .short-comments-list{overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:12px; flex:1;}
+  .short-comments-sheet .comment-form{border-top:1px solid var(--line); padding:12px 16px; margin:0; flex:none;}
+
+  /* ---------- MODAL / DIALOG ---------- */
+  .modal-back{
+    position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.3);
+    display:flex; align-items:flex-end; justify-content:center; z-index:10; padding:16px;
+  }
+  .modal{
+    background:var(--paper-raised); border-radius:8px; padding:20px; max-width:420px; width:100%;
+    max-height:90vh; overflow-y:auto;
+  }
+  .modal h3{margin:0 0 16px; font-size:18px; font-weight:600;}
+  .modal label{display:block; font-size:13px; font-weight:600; margin:14px 0 6px; color:var(--ink);}
+  .modal input, .modal textarea, .modal select{
+    width:100%; border:1px solid var(--line); border-radius:var(--radius);
+    padding:10px; font-size:14px; background:var(--paper); color:var(--ink);
+    font-family:inherit; outline:none;
+  }
+  .modal input:focus, .modal textarea:focus, .modal select:focus{
+    border-color:var(--berry); background:var(--paper-raised);
+  }
+  .modal-actions{display:flex; gap:10px; margin-top:18px; justify-content:flex-end;}
+  .btn-solid{background:var(--berry); color:#fff; border:none; border-radius:4px; padding:10px 16px; font-weight:600; font-size:14px;}
+  .btn-ghost{background:none; border:1px solid var(--line); color:var(--ink); border-radius:4px; padding:10px 16px; font-weight:600; font-size:14px;}
+  .modal-change-photo{background:var(--line); border:none; border-radius:var(--radius); padding:20px 10px; width:100%; font-weight:600; color:var(--ink);}
+
+  /* ---------- CHECKBOX STYLES ---------- */
+  .checkbox-row{display:flex; align-items:center; gap:10px; margin:12px 0;}
+  .checkbox-row input[type="checkbox"]{width:18px; height:18px; cursor:pointer;}
+  .checkbox-row label{margin:0; cursor:pointer; flex:1;}
+
+  /* ---------- DOWNLOAD BUTTON ---------- */
+  .download-btn{
+    background:none; border:none; color:var(--ink-soft); font-size:13px;
+    display:flex; align-items:center; gap:6px; cursor:pointer; padding:4px;
+  }
+  .download-btn:hover{color:var(--berry);}
+  .download-btn.downloading{opacity:0.6;}
+
+  /* ---------- CALL MODAL ---------- */
+  .call-modal{
+    position:fixed; top:0; left:0; right:0; bottom:0; background:#000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    z-index:100; color:#fff; font-family:'IBM Plex Sans', sans-serif;
+  }
+  .call-video{width:100%; height:100%; object-fit:cover; position:absolute; top:0; left:0;}
+  .call-info{
+    position:relative; z-index:2; text-align:center; pointer-events:none;
+  }
+  .call-name{font-size:24px; font-weight:600; margin-bottom:8px;}
+  .call-status{font-size:14px; color:rgba(255,255,255,0.7);}
+  .call-controls{
+    position:relative; z-index:2; display:flex; gap:16px; margin-top:40px;
+    justify-content:center; align-items:center;
+  }
+  .call-btn{
+    width:56px; height:56px; border-radius:50%; border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; font-size:24px;
+    transition:transform .2s;
+  }
+  .call-btn:hover{transform:scale(1.1);}
+  .call-btn.accept{background:#4CAF50; color:#fff;}
+  .call-btn.decline{background:#f44336; color:#fff;}
+  .call-btn.mute{background:rgba(255,255,255,0.2); color:#fff;}
+  .call-btn.speaker{background:rgba(255,255,255,0.2); color:#fff;}
+  .call-duration{font-size:13px; color:rgba(255,255,255,0.7); margin-top:16px;}
+
+  /* ---------- RIGHT PANEL ---------- */
+  .panel{padding:26px 20px; display:flex; flex-direction:column; gap:26px;}
+  .card{border:1px solid var(--line); border-radius:var(--radius); padding:18px; background:var(--paper-raised);}
+  .profile-card .avatar{width:52px;height:52px;font-size:17px;margin-bottom:10px;}
+  .profile-card h3{margin:0 0 2px; font-family:'Fraunces', serif; font-size:18px;}
+  .profile-card p{margin:0 0 12px; font-size:13.5px; color:var(--ink-soft);}
+  .stat-row{display:flex; gap:18px; font-size:13px;}
+  .stat-row b{display:block; font-size:15px;}
+  .card h4{margin:0 0 12px; font-size:13.5px; text-transform:none; letter-spacing:.2px; color:var(--ink-soft); font-weight:600;}
+  .suggest-row{display:flex; align-items:center; gap:10px; margin-bottom:14px;}
+  .suggest-row .avatar{width:34px;height:34px;font-size:12px;}
+  .suggest-row .who{flex:1; min-width:0;}
+  .suggest-row .who .n{font-size:13.5px; font-weight:600;}
+  .suggest-row .who .h{font-size:12px; color:var(--ink-soft);}
+  .follow-btn{border:1px solid var(--ink); background:none; border-radius:999px; padding:5px 12px; font-size:12px; font-weight:600;}
+  .follow-btn.following{background:var(--ink); color:var(--paper);}
+  .trend{padding:9px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+  .trend:last-child{border:none;}
+  .trend .tag{font-weight:600; display:block;}
+  .trend .n{color:var(--ink-soft); font-size:12px;}
+
+  /* ---------- VIEWS: PROFILE / EXPLORE / NOTIFS / MESSAGES ---------- */
+  .profile-banner{height:120px; background:linear-gradient(120deg, var(--gold-soft), var(--berry-soft));}
+  .profile-head{padding:0 22px 18px; margin-top:-34px;}
+  .profile-head .avatar{width:84px;height:84px; font-size:26px; border:4px solid var(--paper); margin-bottom:10px;}
+  .profile-head h2{font-family:'Fraunces', serif; margin:0 0 2px; font-size:23px;}
+  .profile-head .handle{color:var(--ink-soft); font-size:14px;}
+  .profile-head .bio{margin:12px 0; font-size:14.5px; line-height:1.5; max-width:480px;}
+  .profile-stats{display:flex; gap:20px; font-size:13.5px; margin-bottom:14px;}
+  .profile-stats b{color:var(--ink);}
+  .edit-btn{border:1px solid var(--line); background:var(--paper-raised); border-radius:999px; padding:8px 16px; font-size:13.5px; font-weight:600;}
+  .sign-out-btn{
+    position:absolute; top:12px; right:14px;
+    display:flex; align-items:center; gap:6px;
+    background:rgba(0,0,0,.35); color:#fff; border:1px solid rgba(255,255,255,.6);
+    border-radius:999px; padding:7px 13px; font-size:12.5px; font-weight:600;
+    backdrop-filter:blur(4px);
+  }
+  .sign-out-btn svg{width:14px;height:14px;stroke:#fff;}
+  .sign-out-btn:hover{background:rgba(0,0,0,.55);}
+
+  .grid-simple{padding:20px 22px; display:grid; gap:14px;}
+  .explore-card{border:1px solid var(--line); border-radius:var(--radius); padding:16px;}
+  .explore-card .tag{font-family:'Fraunces', serif; font-size:17px; margin:0 0 4px;}
+  .explore-card p{margin:0; font-size:13px; color:var(--ink-soft);}
+
+  .notif{display:flex; gap:12px; padding:15px 22px; border-bottom:1px solid var(--line); align-items:flex-start;}
+  .notif svg{width:20px;height:20px; flex:none; margin-top:2px; stroke:var(--berry);}
+  .notif .t{font-size:14.5px;}
+  .notif .time{font-size:12px; color:var(--ink-soft); margin-top:2px;}
+  .notif.unread{background:var(--line);}
+  .notif .n-avatar{position:relative; flex:none;}
+  .notif .n-badge{position:absolute; right:-3px; bottom:-3px; width:18px;height:18px; border-radius:50%; background:var(--paper); display:flex; align-items:center; justify-content:center;}
+  .notif .n-badge svg{width:11px;height:11px; margin:0; stroke:var(--gold);}
+
+  .msg-thread{display:flex; align-items:center; gap:12px; padding:14px 22px; border-bottom:1px solid var(--line); cursor:pointer;}
+  .msg-thread:hover{background:var(--line);}
+  .msg-thread .who{flex:1; min-width:0;}
+  .msg-thread .n{font-weight:600; font-size:14.5px;}
+  .msg-thread .preview{font-size:13px; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .msg-thread .time{font-size:11.5px; color:var(--ink-soft); flex:none;}
+  .msg-thread .call-indicator{
+    display:inline-flex; align-items:center; gap:4px; font-size:12px; color:var(--berry);
+    background:var(--berry-soft); padding:2px 6px; border-radius:999px; margin-left:4px;
+  }
+
+  .navlist button{position:relative;}
+  .nav-badge{position:absolute; top:2px; left:18px; width:8px;height:8px; border-radius:50%; background:var(--berry);}
+  .mobile-nav button{position:relative;}
+  .mobile-nav .nav-badge{top:2px; right:8px; left:auto;}
+
+  .convo-wrap{display:flex; flex-direction:column; min-height:70vh;}
+  .convo-head{display:flex; align-items:center; gap:10px; padding:14px 18px; border-bottom:1px solid var(--line);}
+  .convo-head button{background:none;border:none;cursor:pointer;color:var(--ink);padding:4px;display:flex;}
+  .convo-head svg{width:22px;height:22px;}
+  .convo-head .n{font-weight:600; font-size:15px;}
+  .convo-head .h{font-size:12.5px; color:var(--ink-soft);}
+  .convo-call-btn{background:var(--berry); color:#fff; border:none; border-radius:4px; padding:6px 12px; font-size:12px; cursor:pointer; margin-left:auto;}
+  .convo-msgs{flex:1; max-height:55vh; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:8px;}
+  .convo-bubble{max-width:72%; padding:9px 13px; border-radius:16px; font-size:14px; line-height:1.4; word-wrap:break-word;}
+  .convo-bubble.mine{align-self:flex-end; background:var(--ink); color:var(--paper); border-bottom-right-radius:4px;}
+  .convo-bubble.theirs{align-self:flex-start; background:var(--line); color:var(--ink); border-bottom-left-radius:4px;}
+  .convo-bubble{cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;}
+  .convo-bubble.deleted{font-style:italic; opacity:.6; cursor:default;}
+  .convo-bubble.mine.deleted{background:var(--line); color:var(--ink-soft);}
+  .msg-action-sheet{
+    background:var(--paper-raised); width:100%; max-width:460px; margin:0 auto;
+    border-radius:16px 16px 0 0; display:flex; flex-direction:column;
+    border:1px solid var(--line); border-bottom:none; animation:sheetUp .2s ease;
+    padding:8px 0 4px;
+  }
+  .msg-action-sheet button{
+    background:none; border:none; text-align:left; padding:14px 20px; font-size:15px;
+    color:var(--ink); cursor:pointer; border-bottom:1px solid var(--line);
+  }
+  .msg-action-sheet button:last-child{border-bottom:none;}
+  .msg-action-sheet button.danger{color:var(--berry);}
+  .msg-action-sheet button:hover{background:var(--line);}
+  .convo-empty{margin:auto; text-align:center; color:var(--ink-soft); font-size:13.5px;}
+  .convo-input{display:flex; align-items:center; gap:10px; padding:12px 16px; border-top:1px solid var(--line);}
+  .convo-input input{flex:1; border:1px solid var(--line); border-radius:20px; padding:10px 16px; font-size:14px; background:var(--paper); color:var(--ink);}
+  .convo-input button{flex:none; width:38px;height:38px; border-radius:50%; border:none; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .convo-input button svg{width:17px;height:17px;}
+  .convo-input button:disabled{opacity:0.4; cursor:default;}
+  .message-btn{margin-top:2px; margin-left:8px; padding:9px 18px; border-radius:20px; border:1px solid var(--line); background:none; color:var(--ink); font-size:13.5px; cursor:pointer;}
+
+  .empty{padding:60px 22px; text-align:center; color:var(--ink-soft);}
+
+  /* SHORTS */
+  .shorts-wrap{display:flex;flex-direction:column;overflow-y:auto;scroll-snap-type:y mandatory;}
+  .short{
+    width:100%; aspect-ratio:9/16; position:relative; scroll-snap-align:start;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;background:#000;
+  }
+  .short video{width:100%;height:100%;object-fit:cover;}
+  .short-mute{
+    position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;
+    background:rgba(0,0,0,.4);border:none;color:#fff;display:flex;align-items:center;justify-content:center;
+    backdrop-filter:blur(4px);z-index:2;
+  }
+  .short-mute svg{width:20px;height:20px;}
+  .short-overlay{
+    position:absolute;bottom:0;left:0;right:0;padding:20px;
+    background:linear-gradient(transparent,rgba(0,0,0,.6));color:#fff;z-index:2;
+  }
+  .short-overlay .name{
+    display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;
+  }
+  .short-overlay .cap{font-size:14px;line-height:1.4;margin-bottom:4px;}
+  .short-rail{
+    position:absolute;right:12px;bottom:80px;display:flex;flex-direction:column;gap:16px;z-index:2;
+  }
+  .short-rail button{
+    background:none;border:none;color:#fff;font-size:12px;display:flex;flex-direction:column;
+    align-items:center;gap:6px;cursor:pointer;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));
+  }
+  .short-rail button svg{width:24px;height:24px;}
+  .short-rail button.liked svg{fill:#fff;}
+  .short-rail span{font-size:11px;}
+  .short-heart-burst{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:80px;pointer-events:none;animation:burstUp 750ms ease-out forwards;
+  }
+  @keyframes burstUp{from{opacity:1;transform:translate(-50%,-50%) scale(0);} to{opacity:0;transform:translate(-50%,-150%) scale(1);}}
+  .short-sound-flash{
+    position:absolute;top:20px;left:20px;font-size:40px;pointer-events:none;
+    animation:flashFade 600ms ease-out forwards;
+  }
+  @keyframes flashFade{from{opacity:1;} to{opacity:0;}}
+  .short-fab{
+    position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;
+    background:var(--berry);color:#fff;border:none;display:flex;align-items:center;justify-content:center;
+    font-size:24px;cursor:pointer;box-shadow:0 4px 12px rgba(162,63,85,.3);z-index:1;
+  }
+  .short-fab:hover{transform:scale(1.08);}
+
+  .post-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;padding:20px 22px;}
+  .grid-cell{
+    position:relative;border-radius:var(--radius);overflow:hidden;cursor:pointer;
+    aspect-ratio:1;background:#000;
+  }
+  .grid-cell img, .grid-cell video{width:100%;height:100%;object-fit:cover;display:block;}
+  .grid-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:24px;color:#fff;}
+  .grid-cell .media-remove{left:6px;right:auto;}
+
+  .profile-tabs{display:flex;border-bottom:1px solid var(--line);padding:0 22px;margin:0;gap:24px;}
+  .profile-tabs button{background:none;border:none;padding:12px 0;border-bottom:2px solid transparent;color:var(--ink-soft);cursor:pointer;font-weight:600;font-size:13.5px;}
+  .profile-tabs button.active{color:var(--ink);border-bottom-color:var(--berry);}
+
+  /* SIGNIN SCREEN */
+  .signin-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--paper);padding:20px;}
+  .signin-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:8px;padding:40px;max-width:420px;}
+  .signin-card h1{margin:0 0 8px;font-size:28px;}
+  .signin-card p{margin:0 0 24px;color:var(--ink-soft);line-height:1.6;}
+  .signin-card input{
+    width:100%;border:1px solid var(--line);border-radius:4px;padding:12px 14px;
+    margin-bottom:12px;font-size:14px;background:var(--paper);color:var(--ink);font-family:inherit;outline:none;
+  }
+  .signin-card input:focus{border-color:var(--berry);}
+  .signin-card button{
+    width:100%;background:var(--berry);color:#fff;border:none;border-radius:4px;
+    padding:12px;font-weight:600;font-size:14px;margin-top:4px;cursor:pointer;
+  }
+  .signin-card button:hover{opacity:.9;}
+  .signin-card .error{color:var(--berry);font-size:13px;margin-top:8px;}
+
+  /* Mobile responsiveness */
+  @media(max-width:800px){
+    .app{grid-template-columns:minmax(0,1fr);}
+    .sidebar,.panel{display:none;}
+    .mobile-nav{display:flex; gap:0; background:var(--paper-raised); border-top:1px solid var(--line);}
+    .mobile-nav button{flex:1;height:52px;border-radius:0;border-right:1px solid var(--line);}
+    .mobile-nav button:last-child{border-right:none;}
+    .short-fab{bottom:68px;}
+  }
+</style>
+<script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-app-compat.min.js"></script>
+<script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-auth-compat.min.js"></script>
+<script src="https://www.gstatic.com/firebaseapps/10.7.0/firebase-database-compat.min.js"></script>
+<script src="https://accounts.google.com/gsi/client"></script>
+</head>
+<body>
+<div class="app" id="app"></div>
+<div id="modalRoot"></div>
+<nav class="mobile-nav" id="mobileNav"></nav>
+
+<script>
+/* ============================================================ */
+/* ENHANCED VAMSHI APP WITH: Download, Downloadable Toggle,    */
+/* Video Calls, Voice Calls, and Enhanced Notifications         */
+/* ============================================================ */
+
+const FIREBASE_URL = 'https://vadiraj-jewellers-d03e9-default-rtdb.firebaseio.com';
+const DATA_ROOT = 'vamshiApp';
+const fbPath = p => `${FIREBASE_URL}/${DATA_ROOT}/${p}.json`;
+const CLOUDINARY_CLOUD_NAME = 'uv3ua3b7';
+const CLOUDINARY_UPLOAD_PRESET = 'Vamshi';
+const MAX_MEDIA_MB = 100;
+const MAX_SHORT_SECONDS = 180;
+const REPORT_THRESHOLD = 5;
+const STRIKE_BAN_THRESHOLD = 2;
+
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyCm4egqJxAj___0KIzH9uB9JVKmLXD2GLY',
+  authDomain: 'vadiraj-jewellers-d03e9.firebaseapp.com',
+  databaseURL: FIREBASE_URL,
+  projectId: 'vadiraj-jewellers-d03e9',
+  storageBucket: 'vadiraj-jewellers-d03e9.firebasestorage.app',
+  messagingSenderId: '853425928215',
+  appId: '1:853425928215:web:cccad3126a8e5cdd864452',
+};
+
+let auth = null, googleProvider = null, firebaseInitError = null;
+try{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  auth = firebase.auth();
+  googleProvider = new firebase.auth.GoogleAuthProvider();
+}catch(err){
+  firebaseInitError = err;
+  console.error('Firebase failed to initialize:', err);
+}
+
+// ============ ICONS ============
+const icon = {
+  home:  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9.5a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>`,
+  explore: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5 13 13l-4.5 2.5L11 11l4.5-2.5z"/></svg>`,
+  bell: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 10a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5H4.5S6 14 6 10Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg>`,
+  mail: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="m4.5 6.5 7.5 6 7.5-6"/></svg>`,
+  user: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 19.5c1.5-4 4-5.5 7.5-5.5s6 1.5 7.5 5.5"/></svg>`,
+  heart: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20.2s-7.3-4.6-9.5-9C.9 7.6 2.7 4 6.3 4c2 0 3.5 1.1 4.4 2.6l1.3 2 1.3-2C14.2 5.1 15.7 4 17.7 4c3.6 0 5.4 3.6 3.8 7.2-2.2 4.4-9.5 9-9.5 9Z"/></svg>`,
+  heartFilled: `<svg viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="0.5"><path d="M12 20.2s-7.3-4.6-9.5-9C.9 7.6 2.7 4 6.3 4c2 0 3.5 1.1 4.4 2.6l1.3 2 1.3-2C14.2 5.1 15.7 4 17.7 4c3.6 0 5.4 3.6 3.8 7.2-2.2 4.4-9.5 9-9.5 9Z"/></svg>`,
+  comment: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5.5h16v11H9.5L5 20v-3.5H4z"/></svg>`,
+  share: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12v6.5a1.5 1.5 0 0 0 1.5 1.5H18.5A1.5 1.5 0 0 0 20 18.5V12"/><path d="M16 7.5 12 3.5 8 7.5"/><path d="M12 3.5v13"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5Z"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>`,
+  media: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="14" height="14" rx="2"/><circle cx="8" cy="10" r="1.6"/><path d="m4 17 4-4 3 3 3-3 3 3"/><path d="m21 9-4 2.5v3L21 17V9Z"/></svg>`,
+  close: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>`,
+  play: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="14" height="18" rx="3"/><path d="M10 8.3v7.4l6-3.7-6-3.7Z" fill="currentColor" stroke="none"/></svg>`,
+  camera: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1-2h7l1 2h2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5v-9Z"/><circle cx="12" cy="12.5" r="3.4"/></circle></svg>`,
+  mute: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4Z"/><path d="M16 16l4-4m0 4-4-4"/></svg>`,
+  unmute: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5H4Z"/><path d="M15.5 9a3.8 3.8 0 0 1 0 6M18 7a7 7 0 0 1 0 10"/></svg>`,
+  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M15 5 8 12l7 7"/></svg>`,
+  send: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 12 20 4l-6.5 16-2.7-7-7.8-1Z" stroke-linejoin="round"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M6 14l6 6 6-6M3 20h18"/></svg>`,
+  phone: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>`,
+  video: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>`,
+};
+
+const palette = ['#A23F55','#AD8422','#4C6B6B','#6E5AA8','#B0653C','#3F7DA2'];
+function colorFor(name){ let h=0; for(const c of name) h+=c.charCodeAt(0); return palette[h%palette.length]; }
+function initials(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function avatarHTML(name,size,photoUrl){
+  const styleSize = size?`;width:${size}px;height:${size}px;font-size:${size*0.32}px`:'';
+  const pic = photoUrl || (name===ME.name ? ME.photoUrl : null);
+  if(pic) return `<div class="avatar" style="${styleSize}"><img src="${pic}" alt=""></div>`;
+  return `<div class="avatar" style="background:${colorFor(name)}${styleSize}">${initials(name)}</div>`;
+}
+
+function uploadToStorage(file, onProgress){
+  return new Promise((resolve, reject)=>{
+    if(!CLOUDINARY_CLOUD_NAME || CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME'){
+      reject(new Error('Cloudinary is not configured.'));
+      return;
+    }
+    if(!CLOUDINARY_UPLOAD_PRESET || CLOUDINARY_UPLOAD_PRESET === 'YOUR_UNSIGNED_UPLOAD_PRESET'){
+      reject(new Error('Cloudinary is not configured.'));
+      return;
+    }
+
+    const resourceType = file.type && file.type.startsWith('video/') ? 'video' : 'image';
+    const url = `https://api.cloudinary.com/v1_1/${encodeURIComponent(CLOUDINARY_CLOUD_NAME)}/${resourceType}/upload`;
+    const form = new FormData();
+    form.append('file', file);
+    form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    form.append('folder', `${DATA_ROOT}/media`);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', url, true);
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable && onProgress) onProgress(Math.round(e.loaded/e.total*100));
+    };
+    xhr.onload = () => {
+      let res = null;
+      try{ res = JSON.parse(xhr.responseText || '{}'); }catch(e){}
+      if(xhr.status>=200 && xhr.status<300 && res && res.secure_url){
+        resolve(res.secure_url);
+      }else{
+        const message = res?.error?.message || `Upload failed (${xhr.status})`;
+        reject(new Error(message));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error reaching Cloudinary.'));
+    xhr.onabort = () => reject(new Error('Upload cancelled.'));
+    xhr.send(form);
+  });
+}
+
+let syncStatus = 'connecting';
+function syncLabel(){
+  if(syncStatus==='online') return '🟢 Synced';
+  if(syncStatus==='connecting') return '🟡 Connecting…';
+  return '🔴 Offline';
+}
+
+async function fbGet(path){
+  const res = await fetch(fbPath(path) + await authQuery());
+  if(!res.ok) throw new Error('GET '+path+' failed: '+res.status);
+  return res.json();
+}
+async function fbPost(path, data){
+  const res = await fetch(fbPath(path) + await authQuery(), { method:'POST', body:JSON.stringify(data) });
+  if(!res.ok) throw new Error('POST '+path+' failed: '+res.status);
+  return res.json();
+}
+async function fbPatch(path, data){
+  const res = await fetch(fbPath(path) + await authQuery(), { method:'PATCH', body:JSON.stringify(data) });
+  if(!res.ok) throw new Error('PATCH '+path+' failed: '+res.status);
+  return res.json();
+}
+async function fbPut(path, data){
+  const res = await fetch(fbPath(path) + await authQuery(), { method:'PUT', body:JSON.stringify(data) });
+  if(!res.ok) throw new Error('PUT '+path+' failed: '+res.status);
+  return res.json();
+}
+async function fbDelete(path){
+  const res = await fetch(fbPath(path) + await authQuery(), { method:'DELETE' });
+  if(!res.ok) throw new Error('DELETE '+path+' failed: '+res.status);
+  return res.json();
+}
+
+async function authQuery(){
+  const user = auth && auth.currentUser;
+  if(!user) return '';
+  try{ return '?auth=' + encodeURIComponent(await user.getIdToken()); }
+  catch(err){ console.error('Could not get ID token:', err); return ''; }
+}
+
+function timeAgo(ts){
+  if(!ts) return 'now';
+  const s = Math.floor((Date.now()-ts)/1000);
+  if(s<45) return 'now';
+  if(s<3600) return Math.floor(s/60)+'m';
+  if(s<86400) return Math.floor(s/3600)+'h';
+  return Math.floor(s/86400)+'d';
+}
+
+function postsObjToArray(obj){
+  return Object.entries(obj||{}).map(([id,p])=>({
+    id,
+    author:p.author, handle:p.handle, authorId:p.authorId||null, photoUrl:p.photoUrl||null, createdAt:p.createdAt||Date.now(),
+    text:p.text, mediaUrl:p.mediaUrl||null, mediaType:p.mediaType||null,
+    downloadable: !!p.downloadable,
+    likes: Object.keys(p.likedBy||{}).length,
+    liked: !!(ME && p.likedBy && p.likedBy[ME.uid]),
+    comments: Object.entries(p.comments||{}).map(([cid,c])=>({id:cid,name:c.name,text:c.text,createdAt:c.createdAt||0}))
+      .sort((a,b)=>a.createdAt-b.createdAt)
+  }));
+}
+
+function blankProfile(user){
+  const emailOrPhone = user.email || user.phoneNumber || user.uid;
+  const base = emailOrPhone.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g,'');
+  return {
+    uid: user.uid,
+    name: user.displayName || 'New user',
+    handle: '@' + (base || user.uid.slice(0,8)),
+    bio: '',
+    followers: 0,
+    following: 0,
+    photoUrl: user.photoURL || null,
+    followingIds: {},
+    strikes: 0,
+    banned: false,
+  };
+}
+
+let ME = null;
+let posts = [];
+let shorts = [];
+let stories = [];
+let allUsers = [];
+let followerCounts = {};
+let suggestions = [];
+let notifications = [];
+let threads = [];
+let activeConversationUid = null;
+let conversationMessages = [];
+let exploreQuery = '';
+
+let view = 'shorts';
+let viewingCreator = null;
+let phoneStep = 'input';
+let phoneNumberValue = '';
+let phoneConfirmation = null;
+
+let showEditModal = false;
+let showUploadShortModal = false;
+let showStoryViewer = null;
+let showShortComments = null;
+
+let pendingMedia = null;
+let uploadPct = null;
+let composerDraftText = '';
+
+let pendingShortFile = null;
+let shortUploadPct = null;
+let shortCaptionDraft = '';
+let shortDownloadableToggle = false; // NEW: Downloadable toggle for shorts
+
+let storyUploadPct = null;
+let pendingStoryFile = null;
+let storyDownloadableToggle = false; // NEW: Downloadable toggle for stories
+
+let profileTab = 'posts';
+let justSignedUp = false;
+let demoPurgeDone = false;
+let lastBubbleTap = { id:null, time:0 };
+
+// ============ NEW: CALL STATE ============
+let activeCall = null; // { type:'voice'|'video', withUid, withName, status:'calling'|'ringing'|'active', startTime }
+let callDuration = null;
+let mutedMic = false;
+let mutedVideo = false;
+
+// ============ NOTIFICATION SYSTEM - ENHANCED ============
+async function sendNotification(toUid, data){
+  if(toUid===ME.uid) return; // don't notify yourself
+  try{
+    await fbPost(`notifications/${toUid}`, {
+      fromUid:ME.uid,
+      fromName:ME.name,
+      fromPhoto:ME.photoUrl||null,
+      type:data.type,
+      text:data.text,
+      targetId:data.targetId||null,
+      read:false,
+      createdAt:Date.now()
+    });
+  }catch(err){ console.error('Could not send notification:', err); }
+}
+
+async function loadNotifications(){
+  try{
+    const raw = await fbGet(`notifications/${ME.uid}`);
+    notifications = Object.entries(raw||{})
+      .map(([id,n])=>({id,...n}))
+      .sort((a,b)=>b.createdAt-a.createdAt);
+  }catch(err){ console.error('Could not load notifications:', err); }
+}
+
+async function markNotificationsRead(){
+  const unread = notifications.filter(n=>!n.read);
+  if(unread.length===0) return;
+  notifications.forEach(n=>n.read=true);
+  try{
+    await Promise.all(unread.map(n=>fbPatch(`notifications/${ME.uid}/${n.id}`, { read:true })));
+  }catch(err){ console.error('Could not mark notifications read:', err); }
+}
+
+// ============ ENHANCED: Download video function ============
+async function downloadVideo(url, filename='video'){
+  try{
+    const response = await fetch(url);
+    const blob = await response.blob();
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename + '.mp4';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  }catch(err){
+    console.error('Download failed:', err);
+    alert('Failed to download video');
+  }
+}
+
+// ============ NEW: CALL FEATURES ============
+function initiateCall(toUid, toName, callType='voice'){
+  // callType: 'voice' or 'video'
+  activeCall = {
+    type: callType,
+    withUid: toUid,
+    withName: toName,
+    status: 'calling',
+    startTime: Date.now()
+  };
+  
+  // Send notification that you're calling
+  sendNotification(toUid, { 
+    type: callType === 'video' ? 'video_call' : 'voice_call',
+    text: `${ME.name} is calling (${callType})`,
+    targetId: null
+  });
+  
+  render();
+}
+
+function acceptCall(){
+  if(activeCall) activeCall.status = 'active';
+  render();
+}
+
+function declineCall(){
+  if(activeCall){
+    sendNotification(activeCall.withUid, {
+      type: 'call_declined',
+      text: `${ME.name} declined your call`
+    });
+  }
+  activeCall = null;
+  render();
+}
+
+function endCall(){
+  if(activeCall){
+    const duration = Math.floor((Date.now() - activeCall.startTime) / 1000);
+    sendNotification(activeCall.withUid, {
+      type: 'call_ended',
+      text: `Call ended (${duration}s)`
+    });
+  }
+  activeCall = null;
+  callDuration = null;
+  render();
+}
+
+function callModal(){
+  if(!activeCall) return '';
+  const statusText = {
+    calling: `Calling ${activeCall.withName}...`,
+    ringing: `${activeCall.withName} is calling...`,
+    active: `Call in progress`
+  }[activeCall.status];
+  
+  return `
+  <div class="call-modal">
+    <div class="call-info">
+      <div class="call-name">${escapeHTML(activeCall.withName)}</div>
+      <div class="call-status">${statusText}</div>
+      ${activeCall.status === 'active' ? `<div class="call-duration" id="callDuration">00:00</div>` : ''}
+    </div>
+    <div class="call-controls">
+      ${activeCall.status === 'ringing' ? `
+        <button class="call-btn accept" onclick="acceptCall()">${icon.phone}</button>
+        <button class="call-btn decline" onclick="declineCall()">✕</button>
+      ` : activeCall.status === 'active' ? `
+        <button class="call-btn mute" id="toggleMute" title="Mute">${icon.mute}</button>
+        ${activeCall.type === 'video' ? `<button class="call-btn speaker" id="toggleVideo" title="Turn off video">${icon.video}</button>` : ''}
+        <button class="call-btn decline" onclick="endCall()">✕</button>
+      ` : `
+        <button class="call-btn decline" onclick="endCall()">Cancel</button>
+      `}
+    </div>
+  </div>`;
+}
+
+// Update call duration every second when active
+let callDurationInterval = null;
+function startCallTimer(){
+  if(callDurationInterval) clearInterval(callDurationInterval);
+  callDurationInterval = setInterval(()=>{
+    if(activeCall && activeCall.status === 'active'){
+      const dur = Math.floor((Date.now() - activeCall.startTime) / 1000);
+      const mins = Math.floor(dur / 60);
+      const secs = dur % 60;
+      const el = document.getElementById('callDuration');
+      if(el) el.textContent = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+    }else{
+      clearInterval(callDurationInterval);
+      callDurationInterval = null;
+    }
+  }, 1000);
+}
+
+// ============ LOAD FROM FIREBASE ============
+async function loadFromFirebase(quiet){
+  if(!quiet) syncStatus='connecting';
+  
+  const [postsRes, shortsRes] = await Promise.allSettled([
+    fbGet('posts'), fbGet('shorts')
+  ]);
+
+  if(postsRes.status==='fulfilled'){
+    posts = postsObjToArray(postsRes.value);
+  }else{
+    console.error('Posts sync failed:', postsRes.reason);
+    if(posts.length===0) posts = [];
+  }
+
+  if(shortsRes.status==='fulfilled'){
+    shorts = Object.entries(shortsRes.value||{}).map(([id,s])=>({
+      id, author:s.author, handle:s.handle, authorId:s.authorId||null, photoUrl:s.photoUrl||null, createdAt:s.createdAt||Date.now(),
+      caption:s.caption||'', src:s.src, downloadable: !!s.downloadable,
+      likes: Object.keys(s.likedBy||{}).length,
+      liked: !!(ME && s.likedBy && s.likedBy[ME.uid]),
+      comments: Object.entries(s.comments||{}).map(([cid,c])=>({id:cid,name:c.name,text:c.text,createdAt:c.createdAt||0}))
+        .sort((a,b)=>a.createdAt-b.createdAt),
+      reports:s.reports||0
+    })).sort((a,b)=>b.createdAt-a.createdAt);
+  }else{
+    console.error('Shorts sync failed:', shortsRes.reason);
+    if(shorts.length===0) shorts = [];
+  }
+
+  await refreshMyCounts();
+  await loadUsersDirectory();
+  await loadNotifications();
+  await loadThreads();
+
+  const anyFailed = [postsRes, shortsRes].some(r=>r.status==='rejected');
+  syncStatus = anyFailed ? 'offline' : 'online';
+}
+
+async function refreshMyCounts(){
+  try{
+    const saved = await fbGet(`users/${ME.uid}`);
+    if(saved){
+      ME.followers = saved.followers || 0;
+      ME.following = saved.following || 0;
+    }
+  }catch(err){ console.error('Could not refresh counts:', err); }
+}
+
+async function loadUsersDirectory(){
+  try{
+    const raw = await fbGet('users') || {};
+    
+    followerCounts = {};
+    Object.entries(raw).forEach(([uid,u])=>{
+      const followingIds = (u && u.followingIds) || {};
+      Object.keys(followingIds).forEach(targetUid=>{
+        if(targetUid && followingIds[targetUid] === true){
+          followerCounts[targetUid] = (followerCounts[targetUid]||0) + 1;
+        }
+      });
+    });
+
+    allUsers = Object.entries(raw)
+      .filter(([uid])=>uid!==ME.uid)
+      .map(([uid,u])=>({
+        uid,
+        name:u?.name || 'Someone',
+        handle:u?.handle || ('@'+uid.slice(0,8)),
+        photoUrl:u?.photoUrl || null,
+        following: !!(ME.followingIds && ME.followingIds[uid]),
+        followers: followerCounts[uid] || 0,
+      }));
+
+    suggestions = allUsers.slice(0,5);
+    ME.followers = followerCounts[ME.uid] || 0;
+  }catch(err){
+    console.error('Could not load users directory:', err);
+  }
+}
+
+async function toggleFollow(uid){
+  const newState = !ME.followingIds[uid];
+  ME.followingIds[uid] = newState;
+  
+  try{
+    await fbPatch(`users/${ME.uid}/followingIds`, { [uid]:newState||null });
+    if(newState) sendNotification(uid, { type:'follow', text:`${ME.name} started following you` });
+    await refreshMyCounts();
+    await loadUsersDirectory();
+    syncStatus='online';
+  }catch(err){
+    console.error('Could not update follow status:', err);
+    ME.followingIds[uid] = !newState;
+    syncStatus='offline';
+  }
+}
+
+async function ensureUserProfile(user){
+  let saved = null;
+  try{ saved = await fbGet(`users/${user.uid}`); }
+  catch(err){ console.error('Could not load profile:', err); }
+  if(!saved){
+    saved = blankProfile(user);
+    justSignedUp = true;
+    for(let attempt=0; attempt<2; attempt++){
+      try{
+        await fbPut(`users/${user.uid}`, saved);
+        break;
+      }catch(err){
+        console.error(`Could not create profile (attempt ${attempt+1}):`, err);
+        if(attempt===0) await new Promise(r=>setTimeout(r, 800));
+      }
+    }
+  }
+  if(saved.banned) return false;
+  
+  ME = {
+    uid: user.uid,
+    name: saved.name || user.displayName || 'New user',
+    handle: saved.handle || ('@'+user.uid.slice(0,8)),
+    bio: saved.bio || '',
+    followers: saved.followers || 0,
+    following: saved.following || 0,
+    photoUrl: saved.photoUrl || user.photoURL || null,
+    followingIds: saved.followingIds || {},
+    strikes: saved.strikes || 0,
+  };
+  return true;
+}
+
+// ============ SHORTS FUNCTIONS ============
+async function setShortLiked(id, liked){
+  const s = shorts.find(sh=>sh.id===id);
+  if(!s || !!s.liked===!!liked) return;
+  s.liked = liked;
+  s.likes += liked ? 1 : -1;
+  const btn = document.querySelector(`[data-short-like="${id}"]`);
+  if(btn){
+    btn.classList.toggle('liked', !!liked);
+    btn.querySelector('span').textContent = s.likes;
+  }
+  try{
+    if(liked) await fbPatch(`shorts/${id}/likedBy`, { [ME.uid]: true });
+    else await fbDelete(`shorts/${id}/likedBy/${ME.uid}`);
+    syncStatus='online';
+    if(liked && s.authorId) sendNotification(s.authorId, { type:'like_short', text:`${ME.name} liked your Short`, targetId:id });
+  }catch(err){ console.error('Could not sync short like:', err); syncStatus='offline'; }
+}
+
+async function submitShortComment(shortId){
+  const input = document.getElementById('shortCommentInput');
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+  const s = shorts.find(sh=>sh.id===shortId);
+  if(!s) return;
+  input.value = '';
+  const comment = { name:ME.name, text, createdAt:Date.now() };
+  try{
+    const res = await fbPost('shorts/'+shortId+'/comments', comment);
+    s.comments.push({ ...comment, id:res.name });
+    syncStatus='online';
+    if(s.authorId) sendNotification(s.authorId, { type:'comment_short', text:`${ME.name} commented: "${text.slice(0,60)}"`, targetId:shortId });
+  }catch(err){
+    console.error(err);
+    s.comments.push({ ...comment, id:'local-'+Date.now() });
+    syncStatus='offline';
+  }
+  refreshShortCommentsUI(shortId);
+}
+
+function refreshShortCommentsUI(shortId){
+  const s = shorts.find(sh=>sh.id===shortId);
+  if(!s) return;
+  const countEl = document.querySelector(`[data-short-comment="${shortId}"] span`);
+  if(countEl) countEl.textContent = s.comments.length;
+  const list = document.getElementById('shortCommentsList');
+  if(list) list.innerHTML = renderShortCommentsList(s.comments);
+}
+
+function renderShortCommentsList(comments){
+  if(!comments.length) return `<p style="color:var(--ink-soft);font-size:13.5px;">No comments yet — be the first.</p>`;
+  return comments.map(c=>`<div class="comment">${avatarHTML(c.name,30)}<div><span class="name">${c.name}</span>${escapeHTML(c.text)}</div></div>`).join('');
+}
+
+function shortCommentsModal(){
+  const s = shorts.find(sh=>sh.id===showShortComments);
+  const comments = s ? s.comments : [];
+  return `
+  <div class="modal-back" id="shortCommentsBack" style="align-items:flex-end; padding:0;">
+    <div class="short-comments-sheet">
+      <div class="short-comments-head">
+        <h3>Comments</h3>
+        <button class="media-remove" id="closeShortComments" title="Close" style="position:static; background:var(--line); color:var(--ink);">${icon.close}</button>
+      </div>
+      <div class="short-comments-list" id="shortCommentsList">${renderShortCommentsList(comments)}</div>
+      <div class="comment-form">
+        <input type="text" placeholder="Add a comment..." id="shortCommentInput">
+        <button id="shortCommentSubmit">Post</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function deleteMyShort(shortId){
+  if(!confirm("Delete this Short? This can't be undone.")) return;
+  shorts = shorts.filter(sh=>sh.id!==shortId);
+  try{ await fetch(fbPath('shorts/'+shortId) + await authQuery(), { method:'DELETE' }); }
+  catch(err){ console.error('Could not delete short:', err); }
+  render();
+}
+
+async function reportShort(s){
+  const newCount = (s.reports||0) + 1;
+  s.reports = newCount;
+  try{ await fbPatch('shorts/'+s.id, { reports:newCount }); }catch(err){ console.error(err); }
+
+  if(newCount >= REPORT_THRESHOLD){
+    shorts = shorts.filter(sh=>sh.id!==s.id);
+    if(s.authorId){
+      try{
+        const targetProfile = await fbGet(`users/${s.authorId}`) || {};
+        const strikes = (targetProfile.strikes||0) + 1;
+        const banned = strikes >= STRIKE_BAN_THRESHOLD;
+        await fbPatch(`users/${s.authorId}`, { strikes, banned });
+      }catch(err){ console.error('Could not update uploader strikes:', err); }
+    }
+    alert('Thanks — this video was removed.');
+  }else{
+    alert('Thanks for the report.');
+  }
+  render();
+}
+
+function openShortComments(shortId){
+  showShortComments = shortId;
+  document.getElementById('modalRoot').innerHTML = shortCommentsModal();
+  const back = document.getElementById('shortCommentsBack');
+  if(back) back.onclick = (e)=>{ if(e.target.id==='shortCommentsBack') closeShortComments(); };
+  const closeBtn = document.getElementById('closeShortComments');
+  if(closeBtn) closeBtn.onclick = closeShortComments;
+  const submitBtn = document.getElementById('shortCommentSubmit');
+  if(submitBtn) submitBtn.onclick = ()=>submitShortComment(showShortComments);
+  const input = document.getElementById('shortCommentInput');
+  if(input){
+    input.focus();
+    input.onkeydown = (e)=>{ if(e.key==='Enter') submitShortComment(showShortComments); };
+  }
+}
+
+function closeShortComments(){
+  showShortComments = null;
+  document.getElementById('modalRoot').innerHTML = '';
+}
+
+function shortsView(){
+  if(shorts.length===0){
+    return `<div class="shorts-wrap" id="shortsWrap" style="display:flex;align-items:center;justify-content:center;">
+      <div class="empty" style="color:#fff;">
+        <span class="brand" style="color:#fff;">No shorts yet</span>
+        Be the first to upload one.
+      </div>
+    </div>`;
+  }
+  return `<div class="shorts-wrap" id="shortsWrap">
+    ${shorts.map((s,i)=>{
+      const isMe = s.authorId===ME.uid;
+      const isFollowing = !isMe && !!ME.followingIds[s.authorId];
+      return `
+      <div class="short" data-short="${s.id}">
+        <video src="${s.src}" ${i===0?'autoplay':''} muted loop playsinline preload="auto" data-video="${s.id}"></video>
+        <button class="short-mute" data-mute="${s.id}">${icon.mute}</button>
+        <div class="short-overlay">
+          <div class="name" style="cursor:pointer;">
+            <span data-open-creator-short="${s.authorId||''}" style="display:flex;align-items:center;gap:8px;">${avatarHTML(s.author,26,s.photoUrl)}${s.handle}</span>
+            ${!isMe && s.authorId ? `<button class="follow-btn ${isFollowing?'following':''}" data-follow-uid="${s.authorId}" style="border-color:#fff;color:#fff;padding:3px 11px;font-size:11px;">${isFollowing?'Following':'Follow'}</button>` : ''}
+          </div>
+          <div class="cap">${escapeHTML(s.caption)}</div>
+        </div>
+        <div class="short-rail">
+          <button class="${s.liked?'liked':''}" data-short-like="${s.id}">${icon.heart}<span>${s.likes}</span></button>
+          <button data-short-comment="${s.id}">${icon.comment}<span>${s.comments.length}</span></button>
+          <button data-short-share="${s.id}">${icon.share}<span>Share</span></button>
+          ${s.downloadable ? `<button data-short-download="${s.id}" title="Download">${icon.download}</button>` : ''}
+          <button data-short-report="${s.id}">🚩<span>Report</span></button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+function uploadShortModal(){
+  return `
+  <div class="modal-back" id="shortModalBack">
+    <div class="modal">
+      <h3>Upload a Short</h3>
+      <label>Video <span style="font-weight:400;color:var(--ink-soft);">(max ${Math.round(MAX_SHORT_SECONDS/60)} min, ${MAX_MEDIA_MB}MB)</span></label>
+      <input type="file" id="shortFileInput" accept="video/*" style="display:none">
+      ${pendingShortFile ? `
+        <div class="media-preview" style="max-width:none;">
+          <video src="${pendingShortFile.previewUrl}" muted controls style="max-height:220px;"></video>
+          <button class="media-remove" id="removeShortFile" ${shortUploadPct!==null?'disabled':''}>${icon.close}</button>
+        </div>` : `<button class="modal-change-photo" id="pickShortFile">Choose video</button>`}
+      <label>Caption</label>
+      <textarea id="shortCaption" rows="2" placeholder="Say something about it...">${shortCaptionDraft}</textarea>
+      <div class="checkbox-row">
+        <input type="checkbox" id="shortDownloadableToggle" ${shortDownloadableToggle?'checked':''}>
+        <label for="shortDownloadableToggle">Allow others to download</label>
+      </div>
+      ${shortUploadPct!==null ? `
+        <div class="upload-progress"><div class="upload-progress-bar" style="width:${shortUploadPct}%"></div></div>
+        <div class="upload-label">Uploading… ${shortUploadPct}%</div>` : ''}
+      <div class="modal-actions">
+        <button class="btn-ghost" id="cancelUploadShort" ${shortUploadPct!==null?'disabled':''}>Cancel</button>
+        <button class="btn-solid" id="saveUploadShort" ${(!pendingShortFile || shortUploadPct!==null)?'disabled':''}>Post</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============ MESSAGES AND CALLS ============
+function conversationIdFor(uidA, uidB){ return [uidA, uidB].sort().join('_'); }
+
+async function loadThreads(){
+  try{
+    const raw = await fbGet('messages') || {};
+    threads = Object.entries(raw)
+      .filter(([id])=>id.includes(ME.uid))
+      .map(([id, msgs])=>{
+        const otherUid = id.replace(ME.uid+'_','').replace('_'+ME.uid,'');
+        const otherUser = allUsers.find(u=>u.uid===otherUid);
+        const msgList = Object.entries(msgs||{}).map(([mid,m])=>({id:mid,...m})).sort((a,b)=>b.createdAt-a.createdAt);
+        const latest = msgList[0];
+        return {
+          uid: otherUid,
+          name: otherUser?.name || 'User',
+          photoUrl: otherUser?.photoUrl || null,
+          handle: otherUser?.handle || '',
+          lastText: latest?.text || '',
+          lastTs: latest?.createdAt || 0
+        };
+      });
+  }catch(err){ console.error('Could not load threads:', err); }
+}
+
+async function loadConversation(otherUid){
+  try{
+    const convoId = conversationIdFor(ME.uid, otherUid);
+    const raw = await fbGet('messages/'+convoId) || {};
+    conversationMessages = Object.entries(raw)
+      .map(([id,m])=>({id,...m}))
+      .sort((a,b)=>a.createdAt-b.createdAt);
+  }catch(err){ console.error('Could not load conversation:', err); }
+}
+
+function openConversation(uid){
+  activeConversationUid = uid;
+  loadConversation(uid);
+  render();
+}
+
+function scrollConvoToBottom(){
+  setTimeout(()=>{
+    const el = document.querySelector('.convo-msgs');
+    if(el) el.scrollTop = el.scrollHeight;
+  }, 0);
+}
+
+async function sendMessage(toUid, text){
+  const convoId = conversationIdFor(ME.uid, toUid);
+  const message = { from:ME.uid, text, createdAt:Date.now(), deleted:false };
+  conversationMessages.push(message);
+  render();
+  scrollConvoToBottom();
+  try{
+    const res = await fbPost('messages/'+convoId, message);
+    syncStatus='online';
+    sendNotification(toUid, { type:'message', text:`${ME.name} sent you a message` });
+  }catch(err){
+    console.error('Could not send message:', err);
+    syncStatus='offline';
+  }
+}
+
+function conversationView(){
+  const other = allUsers.find(u=>u.uid===activeConversationUid)
+    || (viewingCreator && viewingCreator.uid===activeConversationUid ? viewingCreator : null)
+    || (threads.find(t=>t.uid===activeConversationUid));
+  const name = other ? other.name : 'User';
+  const photo = other ? other.photoUrl : null;
+
+  return `
+  <div class="convo-wrap">
+    <div class="convo-head">
+      <button data-convo-back>${icon.back}</button>
+      ${avatarHTML(name,34,photo)}
+      <div><div class="n">${escapeHTML(name)}</div><div class="h">${other && other.handle ? escapeHTML(other.handle) : ''}</div></div>
+      ${activeConversationUid ? `<button class="convo-call-btn" data-voice-call="${activeConversationUid}" title="Voice call">${icon.phone}</button>` : ''}
+      ${activeConversationUid ? `<button class="convo-call-btn" data-video-call="${activeConversationUid}" title="Video call" style="margin-left:6px;">${icon.video}</button>` : ''}
+    </div>
+    <div class="convo-msgs">
+      ${(()=>{ const visible = conversationMessages.filter(m=>!(m.deletedFor && m.deletedFor[ME.uid]));
+        return visible.length===0
+          ? `<div class="convo-empty">Say hello 👋</div>`
+          : visible.map(m=>`
+            <div class="convo-bubble ${m.from===ME.uid?'mine':'theirs'}${m.deleted?' deleted':''}" data-msg-bubble data-msg-id="${m.id}">${m.deleted ? 'This message was deleted' : escapeHTML(m.text)}</div>
+          `).join('');
+      })()}
+    </div>
+    <div class="convo-input">
+      <input type="text" id="convoInput" placeholder="Message ${escapeHTML(name.split(' ')[0])}..." autocomplete="off">
+      <button id="convoSend">${icon.send}</button>
+    </div>
+  </div>`;
+}
+
+// ============ UI FUNCTIONS ============
+function escapeHTML(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+const notifIcons = {
+  follow: 'user',
+  like_post: 'heart',
+  like_short: 'heart',
+  comment_post: 'comment',
+  comment_short: 'comment',
+  message: 'mail',
+  voice_call: 'phone',
+  video_call: 'video',
+  call_declined: 'phone',
+  call_ended: 'phone'
+};
+
+function notifsView(){
+  if(notifications.length===0){
+    return `<div class="empty"><span class="brand">No notifications yet</span>When people follow you, like, comment, call, or message you'll see it here.</div>`;
+  }
+  return notifications.map(n=>`
+    <div class="notif ${n.read?'':'unread'}">
+      <span class="n-avatar">
+        ${avatarHTML(n.fromName||'User', 40, n.fromPhoto)}
+        <span class="n-badge">${icon[notifIcons[n.type]||'bell']}</span>
+      </span>
+      <div><div class="t">${escapeHTML(n.text||'')}</div><div class="time">${timeAgo(n.createdAt)}</div></div>
+    </div>
+  `).join('');
+}
+
+function messagesView(){
+  if(threads.length===0){
+    return `<div class="empty"><span class="brand">No conversations yet</span>Open someone's profile and tap Message to start one.</div>`;
+  }
+  return threads.map(t=>`
+    <div class="msg-thread" data-open-thread="${t.uid}">
+      ${avatarHTML(t.name||'User',44,t.photoUrl)}
+      <div class="who">
+        <div class="n">${escapeHTML(t.name||'User')}</div>
+        <div class="preview">${escapeHTML(t.lastText||'')}</div>
+      </div>
+      <div class="time">${timeAgo(t.lastTs)}</div>
+    </div>
+  `).join('');
+}
+
+function postHTML(p){
+  return `
+  <article class="post" data-id="${p.id}">
+    ${avatarHTML(p.author,null,p.photoUrl)}
+    <div class="post-main">
+      <div class="post-head">
+        <span class="name">${p.author}</span>
+        <span class="handle">${p.handle}</span>
+        <span class="dot">·</span>
+        <span class="time">${timeAgo(p.createdAt)}</span>
+      </div>
+      <div class="post-text">${escapeHTML(p.text)}</div>
+      ${p.mediaUrl ? `<div class="post-media">${p.mediaType==='video' ? `<video src="${p.mediaUrl}" controls preload="metadata"></video>` : `<img src="${p.mediaUrl}" loading="lazy">`}</div>` : ''}
+      <div class="post-actions">
+        <button class="act ${p.liked?'liked':''}" data-like="${p.id}">${icon.heart}<span>${p.likes}</span></button>
+        <button class="act" data-toggle-comments="${p.id}">${icon.comment}<span>${p.comments.length}</span></button>
+        <button class="act" data-share="${p.id}">${icon.share}<span>Share</span></button>
+        ${p.downloadable && p.mediaType==='video' ? `<button class="download-btn" data-download="${p.id}" title="Download">${icon.download}</button>` : ''}
+      </div>
+      <div class="comments" id="comments-${p.id}" style="display:none">
+        ${p.comments.map(c=>`<div class="comment">${avatarHTML(c.name,30)}<div><span class="name">${c.name}</span>${escapeHTML(c.text)}</div></div>`).join('')}
+        <div class="comment-form">
+          <input type="text" placeholder="Add a comment..." data-comment-input="${p.id}">
+          <button data-comment-submit="${p.id}">Post</button>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+function composer(){
+  return `
+  <div class="composer">
+    ${avatarHTML(ME.name)}
+    <div class="composer-body">
+      <textarea id="postText" placeholder="Share something, ${ME.name.split(' ')[0]}..." rows="2"></textarea>
+      ${pendingMedia ? `
+        <div class="media-preview">
+          ${pendingMedia.type==='video'
+            ? `<video src="${pendingMedia.previewUrl}" muted controls></video>`
+            : `<img src="${pendingMedia.previewUrl}">`}
+          <button class="media-remove" id="removeMedia" ${uploadPct!==null?'disabled':''}>${icon.close}</button>
+        </div>` : ''}
+      ${uploadPct!==null ? `
+        <div class="upload-progress"><div class="upload-progress-bar" style="width:${uploadPct}%"></div></div>
+        <div class="upload-label">Uploading… ${uploadPct}%</div>` : ''}
+      <div class="composer-row">
+        <div class="composer-tools">
+          <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none">
+          <button class="media-btn" id="mediaBtn" title="Add photo or video" ${uploadPct!==null?'disabled':''}>${icon.media}</button>
+          <span class="composer-count" id="charCount">0 / 280</span>
+        </div>
+        <button class="post-submit" id="submitPost" disabled>Post</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function feed(list){
+  if(list.length===0){
+    return `<div class="empty"><span class="brand">Nothing here yet</span>When people you follow post, it'll show up here.</div>`;
+  }
+  return `<div class="feed">${list.slice().sort((a,b)=>b.createdAt-a.createdAt).map(postHTML).join('')}</div>`;
+}
+
+function profileHeader(){
+  return `
+  <div class="profile-banner" style="position:relative;">
+    <button class="sign-out-btn" id="signOutBtnProfile" title="Sign out">${icon.close}<span>Sign out</span></button>
+  </div>
+  <div class="profile-head">
+    <div class="photo-edit">
+      ${avatarHTML(ME.name,84,ME.photoUrl)}
+      <button class="photo-edit-btn" id="openEditPhoto" title="Change photo">${icon.camera}</button>
+    </div>
+    <h2>${ME.name}</h2>
+    <div class="handle">${ME.handle}</div>
+    <div class="bio">${escapeHTML(ME.bio)}</div>
+    <div class="profile-stats">
+      <span><b>${ME.following}</b> Following</span>
+      <span><b>${ME.followers}</b> Followers</span>
+    </div>
+    <button class="edit-btn" id="openEdit">Edit profile</button>
+  </div>`;
+}
+
+function profileGrid(){
+  const tabs = `<div class="profile-tabs">
+    <button class="${profileTab==='posts'?'active':''}" data-profile-tab="posts">Posts</button>
+    <button class="${profileTab==='shorts'?'active':''}" data-profile-tab="shorts">Shorts</button>
+    <button class="${profileTab==='following'?'active':''}" data-profile-tab="following">Following</button>
+    <button class="${profileTab==='followers'?'active':''}" data-profile-tab="followers">Followers</button>
+  </div>`;
+
+  if(profileTab==='shorts'){
+    const mine = shorts.filter(s=>s.authorId===ME.uid).slice().sort((a,b)=>b.createdAt-a.createdAt);
+    if(mine.length===0){
+      return tabs + `<div class="empty"><span class="brand">No Shorts yet</span>Videos you upload will show up here — with a delete option.</div>`;
+    }
+    return tabs + `<div class="post-grid">
+        ${mine.map(s=>`
+          <div class="grid-cell">
+            <video src="${s.src}" muted></video>
+            <span class="grid-play">${icon.play}</span>
+            <button class="media-remove" data-delete-short="${s.id}" title="Delete this Short" style="left:6px;right:auto;">${icon.close}</button>
+          </div>`).join('')}
+      </div>`;
+  }
+
+  if(profileTab==='followers'){
+    const followerList = allUsers.filter(u => !!((u.followingIds || {})[ME.uid]));
+    if(followerList.length===0){
+      return tabs + `<div class="empty"><span class="brand">No followers yet</span>When someone follows you, they will appear here.</div>`;
+    }
+    return tabs + followerList.map(u=>`
+      <div style="padding:20px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;">
+        ${avatarHTML(u.name,44,u.photoUrl)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;">${escapeHTML(u.name)}</div>
+          <div style="font-size:13px;color:var(--ink-soft);">${escapeHTML(u.handle)}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  if(profileTab==='following'){
+    const followingList = allUsers.filter(u => !!ME.followingIds[u.uid]);
+    if(followingList.length===0){
+      return tabs + `<div class="empty"><span class="brand">Not following anyone yet</span>Follow people to see their posts and Shorts.</div>`;
+    }
+    return tabs + followingList.map(u=>`
+      <div style="padding:20px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px;">
+        ${avatarHTML(u.name,44,u.photoUrl)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;">${escapeHTML(u.name)}</div>
+          <div style="font-size:13px;color:var(--ink-soft);">${u.followers} followers</div>
+        </div>
+        <button class="follow-btn following" data-unfollow="${u.uid}">Following</button>
+      </div>`).join('');
+  }
+
+  const myPosts = posts.filter(p=>p.authorId===ME.uid).slice().sort((a,b)=>b.createdAt-a.createdAt);
+  if(myPosts.length===0){
+    return tabs + `<div class="empty"><span class="brand">No posts yet</span>Posts you share will show up on your profile.</div>`;
+  }
+  return tabs + feed(myPosts);
+}
+
+function exploreView(){
+  const q = exploreQuery.trim().toLowerCase();
+  const results = q
+    ? allUsers.filter(u=>u.name.toLowerCase().includes(q) || u.handle.toLowerCase().includes(q))
+    : allUsers;
+  return `<div class="grid-simple">
+    <div class="explore-card" style="padding:12px 16px;">
+      <input type="text" id="profileSearchInput" placeholder="Search people by name or @handle" value="${exploreQuery.replace(/"/g,'&quot;')}"
+        style="width:100%;border:1px solid var(--line);border-radius:999px;padding:10px 16px;font-size:14px;background:var(--paper-raised);outline:none;font-family:inherit;">
+    </div>
+    ${results.length===0
+      ? `<div class="explore-card"><p class="tag">${q ? `Results for "${escapeHTML(exploreQuery)}"` : 'People to follow'}</p><p>${q ? 'No one matches that search yet.' : 'No other accounts yet'}</p></div>`
+      : `<div class="explore-card">
+          <p class="tag">${q ? `Results for "${escapeHTML(exploreQuery)}"` : 'People to follow'}</p>
+          ${results.map(s=>`
+          <div class="suggest-row" style="margin-top:12px" data-open-creator="${s.uid}">
+            ${avatarHTML(s.name,34,s.photoUrl)}
+            <div class="who">
+              <div class="n">${escapeHTML(s.name)}</div>
+              <div class="h">${escapeHTML(s.handle)} · ${s.followers||0} Followers</div>
+            </div>
+            <button class="follow-btn ${s.following?'following':''}" data-follow-uid="${s.uid}">${s.following?'Following':'Follow'}</button>
+          </div>`).join('')}
+        </div>`}
+  </div>`;
+}
+
+function mainCol(){
+  let body = '';
+  if(view==='shorts') body = shortsView() + `<button class="short-fab" id="openUploadShort" title="Upload a short">${icon.plus}</button>`;
+  else if(view==='home') body = composer() + feed(posts);
+  else if(view==='profile') body = profileHeader() + profileGrid();
+  else if(view==='explore') body = exploreView();
+  else if(view==='notifications') body = notifsView();
+  else if(view==='messages') body = messagesView();
+  else if(view==='conversation') body = conversationView();
+
+  const noTopbar = view==='shorts' || view==='conversation';
+  return `<main class="main">
+    ${noTopbar ? '' : `<div class="topbar">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div><h1 class="brand">${view==='home'?'Home':(view==='shorts'?'Shorts':(view==='explore'?'Explore':(view==='notifications'?'Notifications':(view==='messages'?'Messages':'Vamshi'))))}</h1></div>
+        <span style="font-size:12px;color:var(--ink-soft);white-space:nowrap;">${syncLabel()}</span>
+      </div>
+    </div>`}
+    ${body}
+  </main>`;
+}
+
+function sidebar(){
+  const unread = notifications.filter(n=>!n.read).length;
+  return `
+  <aside class="sidebar">
+    <div class="logo brand">Va<em>m</em>shi</div>
+    <ul class="navlist">
+      <li><button data-nav="home" class="${view==='home'?'active':''}">${icon.home}<span class="lbl">Home</span></button></li>
+      <li><button data-nav="shorts" class="${view==='shorts'?'active':''}">${icon.play}<span class="lbl">Shorts</span></button></li>
+      <li><button data-nav="explore" class="${view==='explore'?'active':''}">${icon.explore}<span class="lbl">Explore</span></button></li>
+      <li><button data-nav="notifications" class="${view==='notifications'?'active':''}">${icon.bell}${unread>0?'<span class="nav-badge"></span>':''}<span class="lbl">Notifications</span></button></li>
+      <li><button data-nav="messages" class="${view==='messages'?'active':''}">${icon.mail}<span class="lbl">Messages</span></button></li>
+      <li><button data-nav="profile" class="${view==='profile'?'active':''}">${icon.user}<span class="lbl">Profile</span></button></li>
+    </ul>
+    <button class="compose-btn" id="focusComposer">New post</button>
+    <div class="sidebar-foot">
+      <button class="theme-toggle" id="themeToggle">${document.documentElement.classList.contains('dark')?icon.sun:icon.moon}<span class="lbl">${document.documentElement.classList.contains('dark')?'Light':'Dark'}</span></button>
+    </div>
+  </aside>`;
+}
+
+function mobileNav(){
+  const unread = notifications.filter(n=>!n.read).length;
+  return `
+    <button data-nav="home" class="${view==='home'?'active':''}" aria-label="Home">${icon.home}</button>
+    <button data-nav="shorts" class="${view==='shorts'?'active':''}" aria-label="Shorts">${icon.play}</button>
+    <button data-nav="explore" class="${view==='explore'?'active':''}" aria-label="Explore">${icon.explore}</button>
+    <button data-nav="notifications" class="${view==='notifications'?'active':''}" aria-label="Notifications">${icon.bell}${unread>0?'<span class="nav-badge"></span>':''}</button>
+    <button data-nav="messages" class="${view==='messages'?'active':''}" aria-label="Messages">${icon.mail}</button>
+    <button data-nav="profile" class="${view==='profile'?'active':''}" aria-label="Profile">${icon.user}</button>
+  `;
+}
+
+function rightPanel(){
+  if(view==='shorts' || view==='conversation') return '';
+  return `<aside class="panel">
+    <div class="card profile-card">
+      ${avatarHTML(ME.name,52,ME.photoUrl)}
+      <h3>${ME.name}</h3>
+      <p>${ME.handle}</p>
+      <div class="stat-row">
+        <div><b>${ME.followers}</b> Followers</div>
+        <div><b>${ME.following}</b> Following</div>
+      </div>
+    </div>
+    ${suggestions.length>0 ? `<div class="card">
+      <h4>Suggested for you</h4>
+      ${suggestions.map(s=>`
+        <div class="suggest-row" data-open-creator="${s.uid}">
+          ${avatarHTML(s.name,34,s.photoUrl)}
+          <div class="who">
+            <div class="n">${escapeHTML(s.name)}</div>
+            <div class="h">${escapeHTML(s.handle)}</div>
+          </div>
+          <button class="follow-btn ${s.following?'following':''}" data-follow-uid="${s.uid}">${s.following?'Following':'Follow'}</button>
+        </div>
+      `).join('')}
+    </div>` : ''}
+  </aside>`;
+}
+
+function render(){
+  document.getElementById('app').innerHTML = sidebar() + mainCol() + rightPanel();
+  document.getElementById('mobileNav').innerHTML = mobileNav();
+  document.getElementById('modalRoot').innerHTML = activeCall ? callModal() : (showEditModal ? editModal() : (showUploadShortModal ? uploadShortModal() : ''));
+  if(activeCall && activeCall.status === 'active'){
+    setTimeout(startCallTimer, 100);
+  }
+  bind();
+}
+
+// Edit modal (simplified for space)
+function editModal(){
+  return `<div class="modal-back" id="modalBack"><div class="modal">
+    <h3>Edit profile</h3>
+    <label>Name</label>
+    <input type="text" id="editName" value="${escapeHTML(ME.name)}">
+    <label>Bio</label>
+    <textarea id="editBio" rows="3">${escapeHTML(ME.bio)}</textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost" id="cancelEdit">Cancel</button>
+      <button class="btn-solid" id="saveEdit">Save</button>
+    </div>
+  </div></div>`;
+}
+
+function bind(){
+  document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=async ()=>{
+    view=b.dataset.nav; showEditModal=false; showUploadShortModal=false; render(); window.scrollTo(0,0);
+    if(view==='profile' || view==='explore'){
+      await refreshMyCounts();
+      await loadUsersDirectory();
+      render();
+    }
+    if(view==='notifications'){
+      await loadNotifications();
+      render();
+      markNotificationsRead();
+    }
+    if(view==='messages'){
+      await loadThreads();
+      render();
+    }
+  });
+
+  const focusBtn = document.getElementById('focusComposer');
+  if(focusBtn) focusBtn.onclick = ()=>{ view='home'; render(); setTimeout(()=>document.getElementById('postText')?.focus(),0); };
+
+  const themeBtn = document.getElementById('themeToggle');
+  if(themeBtn) themeBtn.onclick = ()=>{ document.documentElement.classList.toggle('dark'); render(); };
+
+  // Composer
+  const textarea = document.getElementById('postText');
+  const submitBtn = document.getElementById('submitPost');
+  if(textarea){
+    textarea.value = composerDraftText;
+    const updateSubmitState = ()=>{
+      const len = textarea.value.length;
+      document.getElementById('charCount').textContent = `${len} / 280`;
+      submitBtn.disabled = (len===0 && !pendingMedia) || len>280;
+    };
+    updateSubmitState();
+    textarea.oninput = ()=>{ composerDraftText = textarea.value; updateSubmitState(); };
+
+    const mediaBtn = document.getElementById('mediaBtn');
+    const mediaInput = document.getElementById('mediaInput');
+    if(mediaBtn) mediaBtn.onclick = ()=> mediaInput.click();
+    if(mediaInput) mediaInput.onchange = ()=>{
+      const file = mediaInput.files[0];
+      if(!file) return;
+      if(file.size > MAX_MEDIA_MB*1024*1024){
+        alert(`File is too large (max ${MAX_MEDIA_MB}MB)`);
+        return;
+      }
+      const type = file.type.startsWith('video') ? 'video' : 'image';
+      pendingMedia = { file, previewUrl:URL.createObjectURL(file), type };
+      render();
+    };
+    const removeMedia = document.getElementById('removeMedia');
+    if(removeMedia) removeMedia.onclick = ()=>{ pendingMedia=null; render(); };
+
+    submitBtn.onclick = async ()=>{
+      const text = textarea.value.trim();
+      if(!text && !pendingMedia) return;
+      submitBtn.disabled = true;
+      let mediaUrl = null, mediaType = null;
+      if(pendingMedia){
+        mediaType = pendingMedia.type;
+        try{
+          uploadPct = 0; render();
+          mediaUrl = await uploadToStorage(pendingMedia.file, pct=>{ uploadPct = pct; document.querySelector('.upload-progress-bar') && (document.querySelector('.upload-progress-bar').style.width = pct+'%'); });
+        }catch(err){
+          console.error(err);
+          uploadPct = null;
+          alert('Upload failed: '+err.message);
+          render();
+          return;
+        }
+        uploadPct = null;
+      }
+      const newPost = { author:ME.name, handle:ME.handle, authorId:ME.uid, photoUrl:ME.photoUrl||null, createdAt:Date.now(), text, mediaUrl, mediaType, downloadable:false, likes:0 };
+      try{
+        const res = await fbPost('posts', newPost);
+        posts.push({ ...newPost, id:res.name, liked:false, comments:[] });
+        syncStatus='online';
+      }catch(err){
+        console.error(err);
+        posts.push({ ...newPost, id:'local-'+Date.now(), liked:false, comments:[] });
+        syncStatus='offline';
+      }
+      composerDraftText = '';
+      pendingMedia = null;
+      render();
+    };
+  }
+
+  // Like posts
+  document.querySelectorAll('[data-like]').forEach(b=>b.onclick=async ()=>{
+    const p = posts.find(p=>p.id==b.dataset.like);
+    const newLiked = !p.liked;
+    p.liked = newLiked;
+    p.likes += newLiked ? 1 : -1;
+    render();
+    try{
+      if(newLiked) await fbPatch(`posts/${p.id}/likedBy`, { [ME.uid]: true });
+      else await fbDelete(`posts/${p.id}/likedBy/${ME.uid}`);
+      syncStatus='online';
+      if(newLiked && p.authorId) sendNotification(p.authorId, { type:'like_post', text:`${ME.name} liked your post`, targetId:p.id });
+    }catch(err){ console.error(err); syncStatus='offline'; }
+  });
+
+  // Toggle comments
+  document.querySelectorAll('[data-toggle-comments]').forEach(b=>b.onclick=()=>{
+    const el = document.getElementById('comments-'+b.dataset.toggleComments);
+    el.style.display = el.style.display==='none' ? 'flex' : 'none';
+  });
+
+  // Share
+  document.querySelectorAll('[data-share]').forEach(b=>b.onclick=()=>{
+    b.querySelector('span').textContent = 'Copied';
+    setTimeout(()=>{ b.querySelector('span').textContent='Share'; },1200);
+  });
+
+  // Download posts
+  document.querySelectorAll('[data-download]').forEach(b=>b.onclick=async ()=>{
+    const p = posts.find(p=>p.id==b.dataset.download);
+    if(p && p.mediaUrl) await downloadVideo(p.mediaUrl, p.author+'_post');
+  });
+
+  // Comments
+  document.querySelectorAll('[data-comment-submit]').forEach(b=>b.onclick=async ()=>{
+    const id = b.dataset.commentSubmit;
+    const input = document.querySelector(`[data-comment-input="${id}"]`);
+    const text = input.value.trim();
+    if(!text) return;
+    const comment = { name:ME.name, text, createdAt:Date.now() };
+    const post = posts.find(p=>p.id==id);
+    try{
+      const res = await fbPost('posts/'+id+'/comments', comment);
+      post.comments.push({ ...comment, id:res.name });
+      syncStatus='online';
+      if(post.authorId) sendNotification(post.authorId, { type:'comment_post', text:`${ME.name} commented: "${text.slice(0,60)}"`, targetId:id });
+    }catch(err){
+      console.error(err);
+      post.comments.push({ ...comment, id:'local-'+Date.now() });
+      syncStatus='offline';
+    }
+    render();
+    setTimeout(()=>document.getElementById('comments-'+id).style.display='flex',0);
+  });
+
+  // SHORTS
+  const shortsWrap = document.getElementById('shortsWrap');
+  if(shortsWrap){
+    const videos = shortsWrap.querySelectorAll('video[data-video]');
+    const io = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{
+        const vid = e.target;
+        vid._wasIntersecting = e.isIntersecting;
+        if(e.isIntersecting){ vid.play().catch(()=>{}); }
+        else{ vid.pause(); }
+      });
+    }, { root:shortsWrap, threshold:0.6 });
+    videos.forEach(v=>io.observe(v));
+
+    shortsWrap.querySelectorAll('[data-mute]').forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      const v = b.closest('.short').querySelector('video');
+      if(v){
+        v.muted = !v.muted;
+        b.innerHTML = v.muted ? icon.mute : icon.unmute;
+      }
+    });
+    shortsWrap.querySelectorAll('[data-short-like]').forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      const s = shorts.find(sh=>sh.id===b.dataset.shortLike);
+      if(s) setShortLiked(s.id, !s.liked);
+    });
+    shortsWrap.querySelectorAll('[data-short-comment]').forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      openShortComments(b.dataset.shortComment);
+    });
+    shortsWrap.querySelectorAll('[data-short-share]').forEach(b=>b.onclick=(e)=>{
+      e.stopPropagation();
+      b.querySelector('span').textContent = 'Copied';
+      setTimeout(()=>{ b.querySelector('span').textContent='Share'; },1200);
+    });
+    shortsWrap.querySelectorAll('[data-short-download]').forEach(b=>b.onclick=async (e)=>{
+      e.stopPropagation();
+      const s = shorts.find(sh=>sh.id===b.dataset.shortDownload);
+      if(s) await downloadVideo(s.src, s.author+'_short');
+    });
+    shortsWrap.querySelectorAll('[data-short-report]').forEach(b=>b.onclick=async (e)=>{
+      e.stopPropagation();
+      const s = shorts.find(sh=>sh.id===b.dataset.shortReport);
+      if(!s) return;
+      if(!confirm('Report this video?')) return;
+      await reportShort(s);
+    });
+    shortsWrap.querySelectorAll('[data-delete-short]').forEach(b=>b.onclick=async (e)=>{
+      e.stopPropagation();
+      await deleteMyShort(b.dataset.deleteShort);
+    });
+    shortsWrap.querySelectorAll('[data-follow-uid]').forEach(b=>b.onclick=async (e)=>{
+      e.stopPropagation();
+      await toggleFollow(b.dataset.followUid);
+      render();
+    });
+  }
+
+  // Open upload short
+  const openUploadShort = document.getElementById('openUploadShort');
+  if(openUploadShort) openUploadShort.onclick = ()=>{ showUploadShortModal=true; showEditModal=false; render(); };
+
+  // Upload short file
+  const shortFileInput = document.getElementById('shortFileInput');
+  const pickShortFile = document.getElementById('pickShortFile');
+  if(pickShortFile) pickShortFile.onclick = ()=> shortFileInput.click();
+  if(shortFileInput) shortFileInput.onchange = async ()=>{
+    const file = shortFileInput.files[0];
+    if(!file) return;
+    if(file.size > MAX_MEDIA_MB*1024*1024){
+      alert(`File too large (max ${MAX_MEDIA_MB}MB)`);
+      return;
+    }
+    try{
+      const url = URL.createObjectURL(file);
+      pendingShortFile = { file, previewUrl:url };
+      render();
+    }catch(err){ console.error(err); }
+  };
+  const removeShortFile = document.getElementById('removeShortFile');
+  if(removeShortFile) removeShortFile.onclick = ()=>{ pendingShortFile=null; render(); };
+  
+  const shortCaptionEl = document.getElementById('shortCaption');
+  if(shortCaptionEl) shortCaptionEl.oninput = ()=>{ shortCaptionDraft = shortCaptionEl.value; };
+
+  const shortDownloadableToggle = document.getElementById('shortDownloadableToggle');
+  if(shortDownloadableToggle) shortDownloadableToggle.onchange = ()=>{ shortDownloadableToggle = shortDownloadableToggle.checked; };
+
+  const cancelUploadShort = document.getElementById('cancelUploadShort');
+  const shortModalBack = document.getElementById('shortModalBack');
+  if(cancelUploadShort) cancelUploadShort.onclick = ()=>{ showUploadShortModal=false; pendingShortFile=null; shortCaptionDraft=''; render(); };
+  if(shortModalBack) shortModalBack.onclick = (e)=>{ if(e.target.id==='shortModalBack'){ showUploadShortModal=false; pendingShortFile=null; shortCaptionDraft=''; render(); } };
+
+  const saveUploadShort = document.getElementById('saveUploadShort');
+  if(saveUploadShort) saveUploadShort.onclick = async ()=>{
+    if(!pendingShortFile) return;
+    const caption = (shortCaptionEl?.value || '').trim();
+    try{
+      shortUploadPct = 0; render();
+      const src = await uploadToStorage(pendingShortFile.file, pct=>{
+        shortUploadPct = pct;
+        const bar = document.querySelector('#shortModalBack .upload-progress-bar');
+        if(bar) bar.style.width = pct+'%';
+      });
+      const newShort = { author:ME.name, handle:ME.handle, authorId:ME.uid, photoUrl:ME.photoUrl||null, caption, src, downloadable:shortDownloadableToggle, likes:0, createdAt:Date.now() };
+      try{
+        const res = await fbPost('shorts', newShort);
+        shorts.unshift({ ...newShort, id:res.name, comments:[], liked:false });
+        syncStatus='online';
+      }catch(err){
+        console.error(err);
+        shorts.unshift({ ...newShort, id:'local-short-'+Date.now(), comments:[], liked:false });
+        syncStatus='offline';
+      }
+      showUploadShortModal=false; pendingShortFile=null; shortCaptionDraft=''; shortUploadPct=null; shortDownloadableToggle=false;
+      render();
+    }catch(err){
+      console.error(err);
+      shortUploadPct=null;
+      alert('Upload failed: '+err.message);
+      render();
+    }
+  };
+
+  // Edit profile
+  const openEdit = document.getElementById('openEdit');
+  if(openEdit) openEdit.onclick = ()=>{ showEditModal=true; showUploadShortModal=false; render(); };
+  const cancelEdit = document.getElementById('cancelEdit');
+  if(cancelEdit) cancelEdit.onclick = ()=>{ showEditModal=false; render(); };
+  const modalBack = document.getElementById('modalBack');
+  if(modalBack) modalBack.onclick = (e)=>{ if(e.target.id==='modalBack'){ showEditModal=false; render(); } };
+  const saveEdit = document.getElementById('saveEdit');
+  if(saveEdit) saveEdit.onclick = async ()=>{
+    ME.name = document.getElementById('editName').value.trim() || ME.name;
+    ME.bio = document.getElementById('editBio').value.trim();
+    showEditModal = false;
+    render();
+    try{ await fbPatch(`users/${ME.uid}`, { name: ME.name, bio: ME.bio }); syncStatus='online'; }
+    catch(err){ console.error(err); syncStatus='offline'; }
+    render();
+  };
+
+  // Sign out
+  const signOutBtn = document.getElementById('signOutBtnProfile');
+  if(signOutBtn) signOutBtn.onclick = async ()=>{ try{ await auth.signOut(); }catch(err){ console.error('Sign-out failed:', err); } };
+
+  // Profile tabs
+  document.querySelectorAll('[data-profile-tab]').forEach(b=>b.onclick=()=>{
+    profileTab=b.dataset.profileTab;
+    render();
+  });
+
+  // Follow buttons
+  document.querySelectorAll('[data-follow-uid]').forEach(b=>b.onclick=async (e)=>{
+    e.stopPropagation();
+    await toggleFollow(b.dataset.followUid);
+    render();
+  });
+  document.querySelectorAll('[data-unfollow]').forEach(b=>b.onclick=async (e)=>{
+    e.stopPropagation();
+    await toggleFollow(b.dataset.unfollow);
+    render();
+  });
+
+  // Open creator profile
+  document.querySelectorAll('[data-open-creator]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const uid = el.dataset.openCreator;
+    viewingCreator = allUsers.find(u=>u.uid===uid);
+    if(viewingCreator) view = 'creatorProfile';
+    render();
+  });
+
+  // Search
+  const profileSearchInput = document.getElementById('profileSearchInput');
+  if(profileSearchInput){
+    profileSearchInput.focus();
+    const pos = profileSearchInput.value.length;
+    profileSearchInput.setSelectionRange(pos,pos);
+    profileSearchInput.oninput = ()=>{ exploreQuery = profileSearchInput.value; render(); };
+  }
+
+  // Conversation
+  document.querySelectorAll('[data-open-thread]').forEach(el=>el.onclick=()=>openConversation(el.dataset.openThread));
+  const convoBack = document.querySelector('[data-convo-back]');
+  if(convoBack) convoBack.onclick = async ()=>{ activeConversationUid = null; view = 'messages'; await loadThreads(); render(); };
+  
+  const convoInput = document.getElementById('convoInput');
+  const convoSend = document.getElementById('convoSend');
+  if(convoInput && convoSend){
+    scrollConvoToBottom();
+    const doSend = ()=>{
+      const text = convoInput.value;
+      if(!text.trim()) return;
+      convoInput.value = '';
+      sendMessage(activeConversationUid, text);
+    };
+    convoSend.onclick = doSend;
+    convoInput.onkeydown = (e)=>{ if(e.key==='Enter'){ e.preventDefault(); doSend(); } };
+    convoInput.focus();
+  }
+
+  // Call buttons
+  document.querySelectorAll('[data-voice-call]').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    const uid = b.dataset.voiceCall;
+    const user = allUsers.find(u=>u.uid===uid);
+    if(user) initiateCall(uid, user.name, 'voice');
+  });
+  document.querySelectorAll('[data-video-call]').forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
+    const uid = b.dataset.videoCall;
+    const user = allUsers.find(u=>u.uid===uid);
+    if(user) initiateCall(uid, user.name, 'video');
+  });
+}
+
+let syncTimer = null;
+function startBackgroundSync(){
+  if(syncTimer) return;
+  syncTimer = setInterval(async ()=>{
+    const active = document.activeElement;
+    const isTyping = active && (active.tagName==='TEXTAREA' || active.tagName==='INPUT');
+    if(isTyping || showEditModal || showUploadShortModal || view==='shorts') return;
+    await loadFromFirebase(true);
+    if(view==='conversation' && activeConversationUid) await loadConversation(activeConversationUid);
+    render();
+  }, 7000);
+}
+
+function stopBackgroundSync(){
+  if(syncTimer){ clearInterval(syncTimer); syncTimer = null; }
+}
+
+function firebaseLoadErrorScreen(){
+  return `<div class="signin-screen">
+    <div class="signin-card">
+      <h1 class="brand" style="font-size:22px;margin-bottom:10px;">Couldn't load sign-in</h1>
+      <p style="color:var(--ink-soft);font-size:13.5px;line-height:1.5;">
+        The Google sign-in script didn't load. Try disabling ad blockers, then reload.
+      </p>
+    </div>
+  </div>`;
+}
+
+function signInScreen(errorMsg){
+  return `<div class="signin-screen">
+    <div class="signin-card">
+      <h1 class="brand" style="font-size:26px;margin-bottom:8px;">Vamshi</h1>
+      <p style="color:var(--ink-soft);margin-bottom:24px;">Short videos, real connections</p>
+      <div id="googleSignIn" style="width:100%;"></div>
+      ${errorMsg ? `<div class="error">${escapeHTML(errorMsg)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+if(firebaseInitError || !auth){
+  document.getElementById('app').innerHTML = firebaseLoadErrorScreen();
+}else{
+  auth.onAuthStateChanged(async (user)=>{
+    stopBackgroundSync();
+    if(!user){
+      ME = null;
+      document.getElementById('app').innerHTML = signInScreen();
+      document.getElementById('mobileNav').innerHTML = '';
+      document.getElementById('modalRoot').innerHTML = '';
+      if(window.google){
+        google.accounts.id.initialize({
+          client_id: '853425928215-...usercontent.com',
+          callback: async (response)=>{
+            try{
+              const credential = firebase.auth.GoogleAuthProvider.credential(response.credential);
+              await auth.signInWithCredential(credential);
+            }catch(err){
+              console.error('Sign-in failed:', err);
+              document.getElementById('app').innerHTML = signInScreen(err.message);
+            }
+          }
+        });
+        google.accounts.id.renderButton(document.getElementById('googleSignIn'), { theme:'outline', size:'large' });
+      }
+      return;
+    }
+    document.getElementById('app').innerHTML = '<div class="signin-screen"><div class="signin-card"><p>Loading...</p></div></div>';
+    const ok = await ensureUserProfile(user);
+    if(!ok){
+      document.getElementById('app').innerHTML = '<div class="signin-screen"><div class="signin-card"><h1>Account suspended</h1></div></div>';
+      try{ await auth.signOut(); }catch(err){ console.error(err); }
+      return;
+    }
+    await loadFromFirebase();
+    if(justSignedUp){ view='explore'; justSignedUp=false; }
+    render();
+    startBackgroundSync();
+  });
+}
+</script>
+</body>
+</html>
