@@ -1081,6 +1081,7 @@ async function loadFromFirebase(quiet){
   await loadStories();
   await loadNotifications();
   await loadThreads();
+  notifyNewActivity();
 
   const anyFailed = [postsRes, shortsRes].some(r=>r.status==='rejected');
   syncStatus = anyFailed ? 'offline' : 'online';
@@ -1121,6 +1122,18 @@ const trends = [
 
 let notifications = []; // loaded from Firebase per-account by loadNotifications()
 let threads = [];       // this account's message threads, loaded by loadThreads()
+
+/* ---------------- DEVICE NOTIFICATIONS ----------------
+ * A real OS/browser push-style notification — the same idea as the "ping"
+ * Claude's own app sends when a response finishes: something happens while
+ * you're not looking at the tab, and your device tells you about it.
+ * Uses the standard Notification API (permission has to be granted by the
+ * person first — browsers won't allow silent notifications).
+ */
+let notifPermissionState = (typeof Notification!=='undefined') ? Notification.permission : 'unsupported';
+let seenNotificationIds = new Set(); // notification ids we've already device-notified for
+let seenThreadTimestamps = {};       // otherUid -> lastTs already device-notified for
+let notifBaselineDone = false;       // true once the first load's existing activity has been recorded (so we don't fire a burst of notifications for old stuff on sign-in)
 let activeConversationUid = null; // uid of the person the conversation view is currently showing
 let conversationMessages = [];    // messages for the open conversation, oldest first
 
@@ -1233,6 +1246,69 @@ async function markNotificationsRead(){
   }catch(err){ console.error('Could not mark notifications read:', err); }
 }
 
+// Asks the browser/OS for notification permission. Must be called from a
+// direct user click (browsers block silent/auto permission prompts).
+async function requestDeviceNotifications(){
+  if(typeof Notification==='undefined'){
+    alert('Notifications are not supported in this browser.');
+    return;
+  }
+  if(Notification.permission==='granted'){ notifPermissionState='granted'; render(); return; }
+  if(Notification.permission==='denied'){
+    alert('Notifications are blocked for this site. You can re-enable them from your browser\'s site settings.');
+    return;
+  }
+  try{
+    notifPermissionState = await Notification.requestPermission();
+  }catch(err){ console.error('Notification permission request failed:', err); }
+  render();
+}
+
+function notifButtonLabel(){
+  if(typeof Notification==='undefined') return 'Notifications unavailable';
+  if(notifPermissionState==='granted') return 'Notifications on';
+  if(notifPermissionState==='denied') return 'Notifications blocked';
+  return 'Enable notifications';
+}
+
+// Fires a real device notification. Only when the tab isn't already focused —
+// no need to buzz the phone for something already on screen.
+function showDeviceNotification(title, body, tag){
+  if(typeof Notification==='undefined' || Notification.permission!=='granted') return;
+  if(document.visibilityState==='visible') return;
+  try{
+    const n = new Notification(title, { body, tag, icon: ME && ME.photoUrl ? ME.photoUrl : undefined });
+    n.onclick = ()=>{ window.focus(); n.close(); };
+  }catch(err){ console.error('Could not show device notification:', err); }
+}
+
+// Diffs the just-refreshed notifications/threads against what we've already
+// notified for, and fires a device notification for anything genuinely new.
+// Called after every loadFromFirebase() so it runs on the 7s background sync.
+function notifyNewActivity(){
+  if(!notifBaselineDone){
+    // First load after sign-in: record everything as "already seen" instead
+    // of notifying for a person's entire notification history at once.
+    notifications.forEach(n=>seenNotificationIds.add(n.id));
+    threads.forEach(t=>{ seenThreadTimestamps[t.uid] = t.lastTs||0; });
+    notifBaselineDone = true;
+    return;
+  }
+  notifications.forEach(n=>{
+    if(!seenNotificationIds.has(n.id)){
+      seenNotificationIds.add(n.id);
+      showDeviceNotification(n.fromName || 'Vamshi', n.text || 'New activity', 'notif-'+n.id);
+    }
+  });
+  threads.forEach(t=>{
+    const prevTs = seenThreadTimestamps[t.uid] || 0;
+    if((t.lastTs||0) > prevTs){
+      seenThreadTimestamps[t.uid] = t.lastTs;
+      showDeviceNotification(t.name || 'New message', t.lastText || '', 'thread-'+t.uid);
+    }
+  });
+}
+
 /* ---------------- MESSAGES (DMs) ---------------- */
 let messageActionTarget = null; // id of the message the action sheet is open for
 let lastBubbleTap = { id:null, time:0 };
@@ -1309,6 +1385,11 @@ async function sendMessage(toUid, text){
     }});
 
     sendNotification(toUid, { type:'message', text:`${ME.name} sent you a message` });
+
+    // A message we just sent updates our own thread's lastTs too — record it
+    // now so the next background sync doesn't mistake it for new activity
+    // and fire a device notification for our own outgoing message.
+    seenThreadTimestamps[toUid] = msg.createdAt;
 
     syncStatus='online';
     await loadConversation(toUid);
@@ -1673,6 +1754,11 @@ async function pollIncomingCalls(){
     const inv = invites[callId];
     if(!incomingCall || incomingCall.callId!==callId){
       incomingCall = { callId, type:inv.type, callerUid:inv.callerUid, callerName:inv.callerName, callerPhoto:inv.callerPhoto||null, isGroup:!!inv.isGroup };
+      showDeviceNotification(
+        `Incoming ${inv.type==='video'?'video':'voice'} call`,
+        inv.callerName ? `${inv.callerName} is calling` : 'Someone is calling',
+        'call-'+callId
+      );
       renderCallUI();
     }
   }catch(err){ console.error('Could not check for incoming calls:', err); }
@@ -1919,6 +2005,7 @@ function sidebar(){
     </ul>
     <button class="compose-btn" id="focusComposer">New post</button>
     <div class="sidebar-foot">
+      <button class="theme-toggle" id="notifPermBtn" style="margin-bottom:8px;">${icon.bell}<span class="lbl">${notifButtonLabel()}</span></button>
       <button class="theme-toggle" id="themeToggle">${document.documentElement.classList.contains('dark')?icon.sun:icon.moon}<span class="lbl">${document.documentElement.classList.contains('dark')?'Light mode':'Dark mode'}</span></button>
     </div>
   </aside>`;
@@ -2751,6 +2838,9 @@ function bind(){
 
   const themeBtn = document.getElementById('themeToggle');
   if(themeBtn) themeBtn.onclick = ()=>{ document.documentElement.classList.toggle('dark'); render(); };
+
+  const notifPermBtn = document.getElementById('notifPermBtn');
+  if(notifPermBtn) notifPermBtn.onclick = requestDeviceNotifications;
 
   const textarea = document.getElementById('postText');
   const submitBtn = document.getElementById('submitPost');
