@@ -1509,7 +1509,7 @@ async function startCall(uids, type){
     renderCallUI();
   }catch(err){
     console.error('Could not start call:', err);
-    alert('Could not start the call — check your connection and try again.');
+    alert('Could not start the call: '+(err && err.message ? err.message : 'unknown error')+'\n\nIf this keeps happening, your Firebase Realtime Database rules likely need to allow read/write on the "calls" and "callInvites" paths.');
     endCall(false);
   }
 }
