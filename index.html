@@ -593,6 +593,21 @@
   }
   .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:20px;}
   .modal-actions button{padding:9px 16px; border-radius:999px; font-size:13.5px; font-weight:600;}
+
+  .settings-section{margin-bottom:18px;}
+  .settings-label{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); margin-bottom:7px;}
+  .settings-row{
+    width:100%; display:flex; align-items:center; justify-content:space-between;
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:11px 13px; font-size:14.5px; margin-bottom:6px;
+  }
+  .settings-row span{display:flex; align-items:center; gap:10px;}
+  .settings-row:hover{border-color:var(--gold);}
+  .settings-hint{font-size:12px; color:var(--ink-soft); line-height:1.5; margin:2px 2px 0;}
+  .ringtone-row.selected{border-color:var(--berry); background:var(--berry-soft);}
+  .ringtone-preview{background:none; border:none; color:var(--ink-soft); display:flex; align-items:center; justify-content:center; padding:2px;}
+  .ringtone-preview:hover{color:var(--berry);}
+  .ringtone-preview svg{width:16px;height:16px;}
   .btn-ghost{background:none; border:1px solid var(--line);}
   .btn-solid{background:var(--ink); color:var(--paper); border:none;}
 
@@ -681,6 +696,7 @@ const icon = {
   download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11"/><path d="m7.5 11 4.5 4.5L16.5 11"/><path d="M4.5 18.5h15"/></svg>`,
   micOff: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5.5a3 3 0 0 1 6 0v5a3 3 0 0 1-.2 1.1M12 15.5a5 5 0 0 1-5-5"/><path d="M17 10.5a5 5 0 0 1-1 3M12 15.5v3.5m-3.5 0h7"/><path d="M3 3l18 18"/></svg>`,
   end: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 13.5c5-4.5 13-4.5 18 0" stroke-linecap="round"/><path d="m8.5 16 2-2.3a2.2 2.2 0 0 1 3 0l2 2.3" stroke-linecap="round"/><path d="M2 2l20 20" /></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>`,
 };
 
 const palette = ['#A23F55','#AD8422','#4C6B6B','#6E5AA8','#B0653C','#3F7DA2'];
@@ -924,6 +940,7 @@ async function ensureUserProfile(user){
     photoUrl: saved.photoUrl || user.photoURL || null,
     followingIds: saved.followingIds || {},
     strikes: saved.strikes || 0,
+    ringtone: saved.ringtone || 'classic',
   };
   return true;
 }
@@ -1076,11 +1093,16 @@ async function loadFromFirebase(quiet){
     if(shorts.length===0) shorts = SEED_SHORTS.map((s,i)=>({id:'local-short-'+i, ...s}));
   }
 
-  await refreshMyCounts();
-  await loadUsersDirectory();
-  await loadStories();
-  await loadNotifications();
-  await loadThreads();
+  // These four don't depend on each other, so fetch them concurrently instead
+  // of one-by-one — this was the biggest chunk of the slow-startup chain,
+  // since each was a separate network round trip taken in series.
+  await Promise.allSettled([
+    refreshMyCounts(),
+    loadUsersDirectory(),
+    loadStories(),
+    loadNotifications(),
+    loadThreads()
+  ]);
   notifyNewActivity();
 
   const anyFailed = [postsRes, shortsRes].some(r=>r.status==='rejected');
@@ -1147,6 +1169,7 @@ let uploadPct = null;     // null when not uploading, else 0-100
 let composerDraftText = ''; // preserves in-progress caption text across re-renders
 let photoUploadPct = null;  // null when not uploading a profile photo, else 0-100
 let showUploadShortModal = false;
+let showSettingsModal = false;
 let pendingShortFile = null; // { file, previewUrl } — chosen but not yet posted
 let shortUploadPct = null;
 let shortCaptionDraft = '';
@@ -1501,7 +1524,20 @@ async function refreshMyCounts(){
  * that both use strict/symmetric NAT may fail to connect — that requires a TURN relay,
  * which isn't something this static, serverless app has.
  */
-const ICE_SERVERS = [{ urls:'stun:stun.l.google.com:19302' }, { urls:'stun:stun1.l.google.com:19302' }];
+// Whether the user has turned Shorts sound on. Global (not per-video) so the
+// preference carries over as they scroll between Shorts, instead of every
+// freshly-mounted <video> silently reverting to muted.
+let shortsSoundOn = false;
+
+const ICE_SERVERS = [
+  { urls:'stun:stun.l.google.com:19302' },
+  { urls:'stun:stun1.l.google.com:19302' },
+  // STUN alone can't traverse symmetric NATs (common on carrier/mobile and
+  // corporate networks) — calls between two such users would just hang
+  // trying to connect. A TURN relay is the fallback for that case. Swap in
+  // your own TURN credentials before shipping; this placeholder will not work.
+  { urls:'turn:YOUR_TURN_SERVER:3478', username:'YOUR_TURN_USERNAME', credential:'YOUR_TURN_CREDENTIAL' }
+];
 let activeCall = null;        // { callId, type:'video'|'voice', isGroup } while ringing-out or on an active call
 let callStatus = 'idle';      // 'idle' | 'ringing-out' | 'active'
 let incomingCall = null;      // { callId, type, callerUid, callerName, callerPhoto, isGroup } while an invite banner is showing
@@ -1511,6 +1547,62 @@ let remoteStreams = {};       // otherUid -> MediaStream
 let callParticipantsMeta = {};// uid -> {name,photoUrl} for everyone currently in the call (for tile labels)
 let callMuted = false;
 let callCamOff = false;
+
+/* ---------------- RINGTONE ----------------
+ * Synthesized in-browser with the Web Audio API (no audio files to host).
+ * Loops a phone-style ring cadence until stopRingtone() is called from
+ * accept/decline/cancel or the invite disappearing on its own.
+ */
+const RINGTONES = [
+  { id:'classic', name:'Classic Ring', tones:[480,620] },
+  { id:'chime',   name:'Gentle Chime', tones:[660,880,990] },
+  { id:'digital', name:'Digital Pulse', tones:[880] },
+  { id:'marimba', name:'Marimba', tones:[523,659,784] },
+];
+let ringtoneCtx = null;
+let ringtoneLoopTimer = null;
+
+function playRingtoneBurst(tones, durationMs){
+  try{
+    if(!ringtoneCtx) ringtoneCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ringtoneCtx.state==='suspended') ringtoneCtx.resume().catch(()=>{});
+    const now = ringtoneCtx.currentTime;
+    tones.forEach((freq,i)=>{
+      const osc = ringtoneCtx.createOscillator();
+      const gain = ringtoneCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.18, now+0.03);
+      gain.gain.setValueAtTime(0.18, now + durationMs/1000 - 0.05);
+      gain.gain.linearRampToValueAtTime(0, now + durationMs/1000);
+      osc.connect(gain).connect(ringtoneCtx.destination);
+      osc.start(now + i*0.001);
+      osc.stop(now + durationMs/1000 + 0.02);
+    });
+  }catch(err){ console.error('Ringtone playback failed:', err); }
+}
+
+// Loops "ring — ring — pause" like a real phone, using whichever ringtone the
+// person picked in Settings (falls back to Classic).
+function startRingtone(ringtoneId){
+  stopRingtone();
+  const tone = RINGTONES.find(r=>r.id===ringtoneId) || RINGTONES[0];
+  const cycle = ()=>{
+    playRingtoneBurst(tone.tones, 700);
+    setTimeout(()=>playRingtoneBurst(tone.tones, 700), 900);
+  };
+  cycle();
+  ringtoneLoopTimer = setInterval(cycle, 3200);
+}
+function stopRingtone(){
+  if(ringtoneLoopTimer){ clearInterval(ringtoneLoopTimer); ringtoneLoopTimer=null; }
+}
+// Used by the Settings screen so people can hear a ringtone before picking it.
+function previewRingtone(ringtoneId){
+  startRingtone(ringtoneId);
+  setTimeout(stopRingtone, 3400);
+}
 let callPollTimer = null;
 let incomingCallPollTimer = null;
 let handledCallCandidateIds = {}; // dedupe so the same ICE candidate isn't applied twice across polls
@@ -1598,6 +1690,7 @@ async function startCall(uids, type){
 async function acceptIncomingCall(){
   if(!incomingCall) return;
   const { callId, type, callerUid, callerName, callerPhoto, isGroup } = incomingCall;
+  stopRingtone();
   try{
     await joinCallMedia(type);
   }catch(err){
@@ -1620,6 +1713,7 @@ async function acceptIncomingCall(){
 async function declineIncomingCall(){
   if(!incomingCall) return;
   const { callId } = incomingCall;
+  stopRingtone();
   try{ await fbDelete(`callInvites/${ME.uid}/${callId}`); }catch(err){ console.error(err); }
   try{ await fbPut(`calls/${callId}/declines/${ME.uid}`, true); }catch(err){ console.error(err); }
   incomingCall = null;
@@ -1657,7 +1751,11 @@ async function pollCallSignals(){
       return;
     }
 
-    for(const uid of otherUids){
+    // Handle every other participant concurrently rather than one at a time —
+    // on a group call, waiting on each person's signal fetch/answer/candidates
+    // in series before starting the next person's was adding a full extra
+    // round trip of latency per participant, every 2-second poll.
+    await Promise.all(otherUids.map(async uid=>{
       callParticipantsMeta[uid] = participants[uid];
       const key = pairKey(ME.uid, uid);
       const sig = await fbGet(`calls/${callId}/signals/${key}`) || {};
@@ -1673,7 +1771,7 @@ async function pollCallSignals(){
           await pc.setLocalDescription(answer);
           await fbPut(`calls/${callId}/signals/${key}/answer`, { type:answer.type, sdp:answer.sdp });
         }
-        continue;
+        return;
       }
 
       const pc = peerConnections[uid];
@@ -1681,14 +1779,13 @@ async function pollCallSignals(){
         await pc.setRemoteDescription(new RTCSessionDescription(sig.answer));
       }
       const theirCandidates = (sig.candidates && sig.candidates[uid]) || {};
-      for(const [cid, cand] of Object.entries(theirCandidates)){
-        const markKey = key+':'+cid;
-        if(handledCallCandidateIds[markKey]) continue;
-        handledCallCandidateIds[markKey] = true;
+      const newCandidates = Object.entries(theirCandidates).filter(([cid])=>!handledCallCandidateIds[key+':'+cid]);
+      await Promise.all(newCandidates.map(async ([cid, cand])=>{
+        handledCallCandidateIds[key+':'+cid] = true;
         try{ await pc.addIceCandidate(new RTCIceCandidate(cand)); }
         catch(err){ console.error('Could not add ICE candidate:', err); }
-      }
-    }
+      }));
+    }));
     renderCallUI();
   }catch(err){ console.error('Call signal poll failed:', err); }
 }
@@ -1734,11 +1831,14 @@ function toggleCallCam(){
 
 function startIncomingCallPolling(){
   if(incomingCallPollTimer) return;
-  incomingCallPollTimer = setInterval(pollIncomingCalls, 4000);
+  // Faster than the general 4s cadence used to feel — a call that's over in
+  // 3-4 rings shouldn't spend half of that not yet showing the banner.
+  incomingCallPollTimer = setInterval(pollIncomingCalls, 2000);
   pollIncomingCalls();
 }
 function stopIncomingCallPolling(){
   if(incomingCallPollTimer){ clearInterval(incomingCallPollTimer); incomingCallPollTimer=null; }
+  stopRingtone();
 }
 async function pollIncomingCalls(){
   if(!ME) return;
@@ -1747,13 +1847,14 @@ async function pollIncomingCalls(){
     const invites = await fbGet(`callInvites/${ME.uid}`) || {};
     const ids = Object.keys(invites);
     if(ids.length===0){
-      if(incomingCall){ incomingCall=null; renderCallUI(); }
+      if(incomingCall){ incomingCall=null; stopRingtone(); renderCallUI(); }
       return;
     }
     const callId = ids[0];
     const inv = invites[callId];
     if(!incomingCall || incomingCall.callId!==callId){
       incomingCall = { callId, type:inv.type, callerUid:inv.callerUid, callerName:inv.callerName, callerPhoto:inv.callerPhoto||null, isGroup:!!inv.isGroup };
+      startRingtone(ME.ringtone);
       showDeviceNotification(
         `Incoming ${inv.type==='video'?'video':'voice'} call`,
         inv.callerName ? `${inv.callerName} is calling` : 'Someone is calling',
@@ -1973,12 +2074,14 @@ function render(){
   document.getElementById('app').innerHTML = sidebar() + mainCol() + rightPanel();
   document.getElementById('mobileNav').innerHTML = mobileNav();
   document.getElementById('modalRoot').innerHTML = showEditModal ? editModal()
+    : (showSettingsModal ? settingsModal()
     : (showUploadShortModal ? uploadShortModal()
     : (showStoryViewer ? storyViewerModal()
     : (showShortComments ? shortCommentsModal()
-    : (showCallPicker ? callPickerModal() : ''))));
+    : (showCallPicker ? callPickerModal() : '')))));
   if(showShortComments) bindShortCommentsModal();
   if(showCallPicker) bindCallPickerModal();
+  if(showSettingsModal) bindSettingsModal();
   bind();
 }
 
@@ -2100,7 +2203,7 @@ function shortsView(){
       const isFollowing = !isMe && !!ME.followingIds[s.authorId];
       return `
       <div class="short" data-short="${s.id}">
-        <video src="${s.src}" ${i===0?'autoplay':''} muted loop playsinline preload="auto" data-video="${s.id}"></video>
+        <video src="${s.src}" ${i===0?'autoplay':''} ${shortsSoundOn?'':'muted'} loop playsinline preload="auto" data-video="${s.id}"></video>
         <button class="short-mute" data-mute="${s.id}">${icon.mute}</button>
         <div class="short-overlay">
           <div class="name" style="cursor:pointer;">
@@ -2206,10 +2309,14 @@ function spawnHeartBurst(shortEl){
 }
 
 // Shared by the mute button and the swipe gesture below, so both stay in sync.
+// Sound preference is global (like every other short-form video app): toggling
+// it on one Short applies to whichever Short is in view next, instead of
+// resetting to muted the moment a new <video> element is created.
 function toggleShortSound(shortEl){
   if(!shortEl) return;
   const vid = shortEl.querySelector('video[data-video]');
   if(!vid) return;
+  shortsSoundOn = vid.muted; // vid.muted is about to flip, so this is the new "on" state
   vid.muted = !vid.muted;
   const btn = shortEl.querySelector('[data-mute]');
   if(btn) btn.innerHTML = vid.muted ? icon.mute : icon.unmute;
@@ -2536,7 +2643,10 @@ function postHTML(p){
 function profileHeader(){
   return `
   <div class="profile-banner" style="position:relative;">
-    <button class="sign-out-btn" id="signOutBtnProfile" title="Sign out">${icon.close}<span>Sign out</span></button>
+    <div style="position:absolute;top:12px;right:14px;display:flex;gap:8px;">
+      <button class="sign-out-btn" id="openSettingsBtn" style="position:static;" title="Settings">${icon.settings}<span>Settings</span></button>
+      <button class="sign-out-btn" id="signOutBtnProfile" style="position:static;" title="Sign out">${icon.close}<span>Sign out</span></button>
+    </div>
   </div>
   <div class="profile-head">
     <div class="photo-edit">
@@ -2689,6 +2799,83 @@ function rightPanel(){
         </div>`).join('')}
     </div>
   </aside>`;
+}
+
+function settingsModal(){
+  return `
+  <div class="modal-back" id="settingsModalBack">
+    <div class="modal">
+      <h3>Settings</h3>
+
+      <div class="settings-section">
+        <div class="settings-label">Account</div>
+        <button class="settings-row" id="settingsEditProfile">
+          <span>${icon.user}Edit profile</span>
+        </button>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Notifications</div>
+        <button class="settings-row" id="settingsNotifBtn">
+          <span>${icon.bell}${notifButtonLabel()}</span>
+        </button>
+        <p class="settings-hint">Alerts (including incoming calls) only reach this device while the app is open in a browser tab, foreground or background — a browser can't wake up and notify you once it's fully closed.</p>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Call ringtone</div>
+        ${RINGTONES.map(r=>`
+          <div class="settings-row ringtone-row ${ME.ringtone===r.id?'selected':''}" data-ringtone="${r.id}">
+            <span>${r.name}</span>
+            <button class="ringtone-preview" data-preview-ringtone="${r.id}" title="Preview">${icon.play}</button>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-label">Appearance</div>
+        <button class="settings-row" id="settingsThemeToggle">
+          <span>${document.documentElement.classList.contains('dark')?icon.sun:icon.moon}${document.documentElement.classList.contains('dark')?'Light mode':'Dark mode'}</span>
+        </button>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" id="closeSettings">Close</button>
+        <button class="btn-solid" id="settingsSignOut" style="background:var(--berry);">Sign out</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+async function setRingtone(id){
+  if(!RINGTONES.some(r=>r.id===id) || ME.ringtone===id) return;
+  ME.ringtone = id;
+  render();
+  try{ await fbPatch(`users/${ME.uid}`, { ringtone:id }); syncStatus='online'; }
+  catch(err){ console.error('Could not save ringtone:', err); syncStatus='offline'; }
+}
+
+function bindSettingsModal(){
+  const back = document.getElementById('settingsModalBack');
+  if(back) back.onclick = (e)=>{ if(e.target.id==='settingsModalBack'){ showSettingsModal=false; render(); } };
+  const close = document.getElementById('closeSettings');
+  if(close) close.onclick = ()=>{ showSettingsModal=false; render(); };
+  const editProfile = document.getElementById('settingsEditProfile');
+  if(editProfile) editProfile.onclick = ()=>{ showSettingsModal=false; showEditModal=true; render(); };
+  const notifBtn = document.getElementById('settingsNotifBtn');
+  if(notifBtn) notifBtn.onclick = requestDeviceNotifications;
+  const themeBtn = document.getElementById('settingsThemeToggle');
+  if(themeBtn) themeBtn.onclick = ()=>{ document.documentElement.classList.toggle('dark'); render(); };
+  const signOut = document.getElementById('settingsSignOut');
+  if(signOut) signOut.onclick = async ()=>{ try{ await auth.signOut(); }catch(err){ console.error('Sign-out failed:', err); } };
+  document.querySelectorAll('[data-ringtone]').forEach(row=>row.onclick=(e)=>{
+    if(e.target.closest('[data-preview-ringtone]')) return; // preview button handles itself
+    setRingtone(row.dataset.ringtone);
+  });
+  document.querySelectorAll('[data-preview-ringtone]').forEach(btn=>btn.onclick=(e)=>{
+    e.stopPropagation();
+    previewRingtone(btn.dataset.previewRingtone);
+  });
 }
 
 function editModal(){
@@ -2964,7 +3151,12 @@ function bind(){
       entries.forEach(e=>{
         const vid = e.target;
         vid._wasIntersecting = e.isIntersecting;
-        if(e.isIntersecting){ vid.play().catch(()=>{}); }
+        if(e.isIntersecting){
+          vid.muted = !shortsSoundOn;
+          const btn = vid.closest('.short')?.querySelector('[data-mute]');
+          if(btn) btn.innerHTML = vid.muted ? icon.mute : icon.unmute;
+          vid.play().catch(()=>{});
+        }
         else{ vid.pause(); }
       });
     }, { root:shortsWrap, threshold:0.6 });
@@ -3356,6 +3548,8 @@ function bind(){
   if(signOutBtn) signOutBtn.onclick = doSignOut;
   const signOutBtnProfile = document.getElementById('signOutBtnProfile');
   if(signOutBtnProfile) signOutBtnProfile.onclick = doSignOut;
+  const openSettingsBtn = document.getElementById('openSettingsBtn');
+  if(openSettingsBtn) openSettingsBtn.onclick = ()=>{ showSettingsModal=true; render(); };
 
   document.querySelectorAll('[data-profile-tab]').forEach(b=>b.onclick=async ()=>{
     profileTab=b.dataset.profileTab;
@@ -3391,7 +3585,7 @@ function startBackgroundSync(){
     // Never silently rebuild the DOM while someone is on the Shorts tab —
     // that used to tear down and re-mount every video mid-scroll, which is
     // what made the creator's profile bar/overlay flash and disappear.
-    if(isTyping || showEditModal || showUploadShortModal || showStoryViewer || view==='shorts') return;
+    if(isTyping || showEditModal || showSettingsModal || showUploadShortModal || showStoryViewer || view==='shorts') return;
     await loadFromFirebase(true);
     if(view==='conversation' && activeConversationUid) await loadConversation(activeConversationUid);
     render();
