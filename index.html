@@ -292,6 +292,9 @@
   .convo-bubble.mine{align-self:flex-end; background:var(--ink); color:var(--paper); border-bottom-right-radius:4px;}
   .convo-bubble.theirs{align-self:flex-start; background:var(--line); color:var(--ink); border-bottom-left-radius:4px;}
   .convo-bubble{cursor:pointer; -webkit-tap-highlight-color:transparent; user-select:none;}
+  *{-webkit-tap-highlight-color: transparent;}
+  html{-webkit-tap-highlight-color: transparent;}
+  a, button, [role="button"], [role="tab"], input, textarea, select, label{-webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;}
   .convo-bubble.deleted{font-style:italic; opacity:.6; cursor:default;}
   .convo-bubble.mine.deleted{background:var(--line); color:var(--ink-soft);}
   .msg-action-sheet{
